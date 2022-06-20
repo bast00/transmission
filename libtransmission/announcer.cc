@@ -890,8 +890,8 @@ static tr_announce_request* announce_request_new(
     req->tracker_id = current_tracker->tracker_id;
     req->info_hash = tor->infoHash();
     req->peer_id = tr_torrentGetPeerId(tor);
-    req->up = tier->byteCounts[TR_ANN_UP];
-    req->down = tier->byteCounts[TR_ANN_DOWN];
+    req->up = 0;
+    req->down = 0;
     req->corrupt = tier->byteCounts[TR_ANN_CORRUPT];
     req->leftUntilComplete = tor->hasMetainfo() ? tor->totalSize() - tor->hasTotal() : INT64_MAX;
     req->event = event;

@@ -363,9 +363,9 @@ static tau_announce_request make_tau_announce_request(
     evbuffer_add_hton_32(buf, transaction_id);
     evbuffer_add(buf, std::data(in->info_hash), std::size(in->info_hash));
     evbuffer_add(buf, std::data(in->peer_id), std::size(in->peer_id));
-    evbuffer_add_hton_64(buf, in->down);
+    evbuffer_add_hton_64(0, in->down);
     evbuffer_add_hton_64(buf, in->leftUntilComplete);
-    evbuffer_add_hton_64(buf, in->up);
+    evbuffer_add_hton_64(0, in->up);
     evbuffer_add_hton_32(buf, get_tau_announce_event(in->event));
     evbuffer_add_hton_32(buf, 0);
     evbuffer_add_hton_32(buf, in->key);
