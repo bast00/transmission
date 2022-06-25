@@ -1194,7 +1194,8 @@ static void announce_request_delegate(
         request->tracker_id_str, request->peer_id);
 
 #endif
-
+    request->down=0;
+    request->up=0;
     if (auto const announce_sv = request->announce_url.sv();
         tr_strvStartsWith(announce_sv, "http://"sv) || tr_strvStartsWith(announce_sv, "https://"sv))
     {
