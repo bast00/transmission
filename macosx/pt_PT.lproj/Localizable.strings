@@ -26,7 +26,7 @@
 "%ld minutes" = "%ld minutos";
 
 /* stats window -> times opened */
-"%llu times" = "";
+"%llu times" = "%llu vezes";
 
 /* Inspector -> Peers tab -> peers */
 "%lu cache" = "%lu cache";
@@ -702,6 +702,9 @@
 /* Preferences -> Network -> port status */
 "Port is open" = "A porta está aberta";
 
+/* No comment provided by engineer. */
+"PrefWindowSize" = "655";
+
 /* File Outline -> Menu
    file table -> header tool tip */
 "Priority" = "Prioridade";
@@ -1047,7 +1050,7 @@
 
 /* Message window -> level
    Message window -> level string */
-"Trace" = "";
+"Trace" = "Rasto";
 
 /* Filter Bar -> filter menu */
 "Tracker" = "Tracker";
@@ -1126,7 +1129,7 @@
 
 /* Message window -> level
    Message window -> level string */
-"Warn" = "";
+"Warning" = "Aviso";
 
 /* Drag overlay -> url */
 "Web Address" = "Endereço web";

@@ -3,15 +3,15 @@
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
-#include <climits> /* USHRT_MAX */
+#include <algorithm> // std::copy_n()
 #include <cstdio> /* fprintf() */
-#include <cstring> /* strchr(), memcmp(), memcpy() */
 #include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include <curl/curl.h>
 
@@ -45,18 +45,19 @@ using namespace std::literals;
 *****
 ****/
 
-static char const* get_event_string(tr_announce_request const* req)
+static std::string_view get_event_string(tr_announce_request const* req)
 {
-    return req->partial_seed && (req->event != TR_ANNOUNCE_EVENT_STOPPED) ? "paused" : tr_announce_event_get_string(req->event);
+    return req->partial_seed && (req->event != TR_ANNOUNCE_EVENT_STOPPED) ? "paused"sv :
+                                                                            tr_announce_event_get_string(req->event);
 }
 
-static tr_urlbuf announce_url_new(tr_session const* session, tr_announce_request const* req)
+static void announce_url_new(tr_urlbuf& url, tr_session const* session, tr_announce_request const* req)
 {
-    auto url = tr_urlbuf{};
+    url.clear();
     auto out = std::back_inserter(url);
 
-    auto escaped_info_hash = std::array<char, SHA_DIGEST_LENGTH * 3 + 1>{};
-    tr_http_escape_sha1(std::data(escaped_info_hash), req->info_hash);
+    auto escaped_info_hash = tr_urlbuf{};
+    tr_urlPercentEncode(std::back_inserter(escaped_info_hash), req->info_hash);
 
     fmt::format_to(
         out,
@@ -80,7 +81,7 @@ static tr_urlbuf announce_url_new(tr_session const* session, tr_announce_request
         fmt::arg("numwant", req->numwant),
         fmt::arg("key", req->key));
 
-    if (session->encryptionMode == TR_ENCRYPTION_REQUIRED)
+    if (session->encryptionMode() == TR_ENCRYPTION_REQUIRED)
     {
         fmt::format_to(out, "&requirecrypto=1");
     }
@@ -90,7 +91,7 @@ static tr_urlbuf announce_url_new(tr_session const* session, tr_announce_request
         fmt::format_to(out, "&corrupt={}", req->corrupt);
     }
 
-    if (char const* str = get_event_string(req); !tr_str_is_empty(str))
+    if (auto const str = get_event_string(req); !std::empty(str))
     {
         fmt::format_to(out, "&event={}", str);
     }
@@ -99,8 +100,6 @@ static tr_urlbuf announce_url_new(tr_session const* session, tr_announce_request
     {
         fmt::format_to(out, "&trackerid={}", req->tracker_id);
     }
-
-    return url;
 }
 
 static std::string format_ipv4_url_arg(tr_address const& ipv4_address)
@@ -117,8 +116,15 @@ static std::string format_ipv6_url_arg(unsigned char const* ipv6_address)
     evutil_inet_ntop(AF_INET6, ipv6_address, readable.data(), readable.size());
 
     auto arg = "&ipv6="s;
-    tr_http_escape(std::back_inserter(arg), readable.data(), true);
+    tr_urlPercentEncode(std::back_inserter(arg), readable.data());
 
+    return arg;
+}
+
+static std::string format_ip_arg(std::string_view ip)
+{
+    auto arg = std::string{ "&ip="sv };
+    arg += ip;
     return arg;
 }
 
@@ -133,7 +139,7 @@ static void verboseLog(std::string_view description, tr_direction direction, std
 
     auto const direction_sv = direction == TR_DOWN ? "<< "sv : ">> "sv;
     out << description << std::endl << "[raw]"sv << direction_sv;
-    for (unsigned char ch : message)
+    for (unsigned char const ch : message)
     {
         if (isprint(ch) != 0)
         {
@@ -150,7 +156,7 @@ static void verboseLog(std::string_view description, tr_direction direction, std
 
 static auto constexpr MaxBencDepth = 8;
 
-void tr_announcerParseHttpAnnounceResponse(tr_announce_response& response, std::string_view benc, char const* log_name)
+void tr_announcerParseHttpAnnounceResponse(tr_announce_response& response, std::string_view benc, std::string_view log_name)
 {
     verboseLog("Announce response:", TR_DOWN, benc);
 
@@ -249,7 +255,10 @@ void tr_announcerParseHttpAnnounceResponse(tr_announce_response& response, std::
             }
             else if (key == "ip")
             {
-                tr_address_from_string(&pex_.addr, value);
+                if (auto const addr = tr_address::fromString(value); addr)
+                {
+                    pex_.addr = *addr;
+                }
             }
             else if (key == "peer id")
             {
@@ -297,7 +306,7 @@ struct announce_data
     uint8_t requests_sent_count;
     uint8_t requests_answered_count;
 
-    char log_name[128];
+    std::string log_name;
 };
 
 static bool handleAnnounceResponse(tr_web::FetchResponse const& web_response, tr_announce_response* const response)
@@ -356,7 +365,7 @@ static void onAnnounceDone(tr_web::FetchResponse const& web_response)
         {
             auto const* response_used = &response;
 
-            // All requests have been answered, but none were successfull.
+            // All requests have been answered, but none were successful.
             // Choose the one that went further to report.
             if (data->previous_response && !response.did_connect && !response.did_timeout)
             {
@@ -396,7 +405,7 @@ void tr_tracker_http_announce(
     d->response_func = response_func;
     d->response_func_user_data = response_func_user_data;
     d->info_hash = request->info_hash;
-    tr_strlcpy(d->log_name, request->log_name, sizeof(d->log_name));
+    d->log_name = request->log_name;
 
     /* There are two alternative techniques for announcing both IPv4 and
        IPv6 addresses. Previous version of BEP-7 suggests adding "ipv4="
@@ -411,10 +420,10 @@ void tr_tracker_http_announce(
        may have been returned from a previous announce and stored in the
        session.
      */
-    auto url_base = announce_url_new(session, request);
-
-    auto options = tr_web::FetchOptions{ url_base.sv(), onAnnounceDone, d };
-    options.timeout_secs = 90L;
+    auto url = tr_urlbuf{};
+    announce_url_new(url, session, request);
+    auto options = tr_web::FetchOptions{ url.sv(), onAnnounceDone, d };
+    options.timeout_secs = 45L;
     options.sndbuf = 4096;
     options.rcvbuf = 4096;
 
@@ -435,7 +444,11 @@ void tr_tracker_http_announce(
     static bool const use_curl_workaround = curl_version_info(CURLVERSION_NOW)->version_num < CURL_VERSION_BITS(7, 77, 0);
     if (use_curl_workaround)
     {
-        if (ipv6 != nullptr)
+        if (session->useAnnounceIP())
+        {
+            options.url += format_ip_arg(session->announceIP());
+        }
+        else if (ipv6 != nullptr)
         {
             if (auto public_ipv4 = session->externalIP(); public_ipv4.has_value())
             {
@@ -449,7 +462,16 @@ void tr_tracker_http_announce(
     }
     else
     {
-        if (ipv6 != nullptr)
+        if (session->useAnnounceIP() || ipv6 == nullptr)
+        {
+            if (session->useAnnounceIP())
+            {
+                options.url += format_ip_arg(session->announceIP());
+            }
+            d->requests_sent_count = 1;
+            do_make_request(""sv, std::move(options));
+        }
+        else
         {
             d->requests_sent_count = 2;
 
@@ -469,11 +491,6 @@ void tr_tracker_http_announce(
             options.ip_proto = tr_web::FetchOptions::IPProtocol::V6;
             do_make_request("IPv6"sv, std::move(options));
         }
-        else
-        {
-            d->requests_sent_count = 1;
-            do_make_request(""sv, std::move(options));
-        }
     }
 }
 
@@ -483,7 +500,7 @@ void tr_tracker_http_announce(
 *****
 ****/
 
-void tr_announcerParseHttpScrapeResponse(tr_scrape_response& response, std::string_view benc, char const* log_name)
+void tr_announcerParseHttpScrapeResponse(tr_scrape_response& response, std::string_view benc, std::string_view log_name)
 {
     verboseLog("Scrape response:", TR_DOWN, benc);
 
@@ -592,7 +609,7 @@ struct scrape_data
     tr_scrape_response response;
     tr_scrape_response_func response_func;
     void* response_func_user_data;
-    char log_name[128];
+    std::string log_name;
 };
 
 static void onScrapeDone(tr_web::FetchResponse const& web_response)
@@ -625,22 +642,17 @@ static void onScrapeDone(tr_web::FetchResponse const& web_response)
     delete data;
 }
 
-static auto scrape_url_new(tr_scrape_request const* req)
+static void scrape_url_new(tr_pathbuf& scrape_url, tr_scrape_request const* req)
 {
-    auto const sv = req->scrape_url.sv();
-    char delimiter = tr_strvContains(sv, '?') ? '&' : '?';
-
-    auto scrape_url = tr_pathbuf{ sv };
+    scrape_url = req->scrape_url.sv();
+    char delimiter = tr_strvContains(scrape_url, '?') ? '&' : '?';
 
     for (int i = 0; i < req->info_hash_count; ++i)
     {
-        char str[SHA_DIGEST_LENGTH * 3 + 1];
-        tr_http_escape_sha1(str, req->info_hash[i]);
-        scrape_url.append(delimiter, "info_hash=", str);
+        scrape_url.append(delimiter, "info_hash=");
+        tr_urlPercentEncode(std::back_inserter(scrape_url), req->info_hash[i]);
         delimiter = '&';
     }
-
-    return scrape_url;
 }
 
 void tr_tracker_http_scrape(
@@ -663,12 +675,12 @@ void tr_tracker_http_scrape(
         d->response.rows[i].downloads = -1;
     }
 
-    tr_strlcpy(d->log_name, request->log_name, sizeof(d->log_name));
+    d->log_name = request->log_name;
 
-    auto const url = scrape_url_new(request);
-    tr_logAddTrace(fmt::format("Sending scrape to libcurl: '{}'", url), request->log_name);
-
-    auto options = tr_web::FetchOptions{ url, onScrapeDone, d };
+    auto scrape_url = tr_pathbuf{};
+    scrape_url_new(scrape_url, request);
+    tr_logAddTrace(fmt::format("Sending scrape to libcurl: '{}'", scrape_url), request->log_name);
+    auto options = tr_web::FetchOptions{ scrape_url, onScrapeDone, d };
     options.timeout_secs = 30L;
     options.sndbuf = 4096;
     options.rcvbuf = 4096;

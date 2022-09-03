@@ -2,7 +2,7 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
-#import <Cocoa/Cocoa.h>
+#import <AppKit/AppKit.h>
 #import <Quartz/Quartz.h>
 
 #import <Sparkle/SUUpdaterDelegate.h>
@@ -13,15 +13,9 @@
 
 @class AddMagnetWindowController;
 @class AddWindowController;
-@class Badger;
-@class DragOverlayWindow;
-@class FilterBarController;
-@class InfoWindowController;
 @class MessageWindowController;
 @class PrefsController;
-@class StatusBarController;
 @class Torrent;
-@class URLSheetWindowController;
 
 typedef NS_ENUM(unsigned int, addType) { //
     ADD_MANUAL,
@@ -168,12 +162,13 @@ typedef NS_ENUM(unsigned int, addType) { //
 
 - (void)setWindowSizeToFit;
 - (void)updateForAutoSize;
+- (void)updateWindowAfterToolbarChange;
 - (void)removeStackViewHeightConstraints;
 @property(nonatomic, readonly) CGFloat minScrollViewHeightAllowed;
 @property(nonatomic, readonly) CGFloat toolbarHeight;
 @property(nonatomic, readonly) CGFloat mainWindowComponentHeight;
 @property(nonatomic, readonly) CGFloat scrollViewHeight;
-- (BOOL)isFullScreen;
+@property(nonatomic, getter=isFullScreen, readonly) BOOL fullScreen;
 
 - (void)updateForExpandCollapse;
 

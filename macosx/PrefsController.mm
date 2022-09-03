@@ -2,11 +2,7 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
-#import <Foundation/Foundation.h>
-
 #import <Sparkle/Sparkle.h>
-
-#include <libtransmission/transmission.h>
 #include <libtransmission/utils.h>
 
 #import "VDKQueue.h"
@@ -203,7 +199,7 @@
     self.window.restorationClass = [self class];
 
     //disable fullscreen support
-    [self.window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenNone];
+    self.window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
 
     NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier:@"Preferences Toolbar"];
     toolbar.delegate = self;
@@ -213,6 +209,7 @@
     toolbar.selectedItemIdentifier = TOOLBAR_GENERAL;
     self.window.toolbar = toolbar;
 
+    [self setWindowSize];
     [self setPrefView:nil];
 
     //set special-handling of magnet link add window checkbox
@@ -391,6 +388,19 @@
 {
     NSWindow* window = ((Controller*)NSApp.delegate).prefsController.window;
     completionHandler(window, nil);
+}
+
+- (void)setWindowSize
+{
+    //set window width with localised value
+    NSRect windowRect = self.window.frame;
+    NSString* sizeString = NSLocalizedString(@"PrefWindowSize", nil);
+    if ([sizeString isEqualToString:@"PrefWindowSize"])
+    {
+        sizeString = @"640";
+    }
+    windowRect.size.width = [sizeString floatValue];
+    [self.window setFrame:windowRect display:YES animate:NO];
 }
 
 //for a beta release, always use the beta appcast
@@ -1123,7 +1133,7 @@
 
         tr_sessionSetRPCPassword(self.fHandle, fullPassword);
 
-        self.fRPCPassword = [[NSString alloc] initWithUTF8String:fullPassword];
+        self.fRPCPassword = @(fullPassword);
         self.fRPCPasswordField.stringValue = self.fRPCPassword;
     }
     else
@@ -1570,8 +1580,13 @@
 
     view.hidden = YES;
     window.contentView = view;
-    [window setFrame:windowRect display:YES animate:YES];
-    view.hidden = NO;
+
+    [NSAnimationContext runAnimationGroup:^(NSAnimationContext* context) {
+        context.allowsImplicitAnimation = YES;
+        [window setFrame:windowRect display:YES];
+    } completionHandler:^{
+        view.hidden = NO;
+    }];
 
     //set title label
     if (sender)

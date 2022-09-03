@@ -1,5 +1,5 @@
 // This file Copyright © 2017-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -11,10 +11,6 @@
 /***
 ****
 ***/
-
-#ifndef __has_attribute
-#define __has_attribute(x) 0
-#endif
 
 #ifndef __has_builtin
 #define __has_builtin(x) 0
@@ -62,18 +58,7 @@
 ****
 ***/
 
-#if __has_attribute(__malloc__) || TR_GNUC_CHECK_VERSION(2, 96)
-#define TR_GNUC_MALLOC __attribute__((__malloc__))
-#else
-#define TR_GNUC_MALLOC
-#endif
-
-/***
-****
-***/
-
 #define TR_PATH_DELIMITER '/'
-#define TR_PATH_DELIMITER_STR "/"
 
 /* Only use this macro to suppress false-positive alignment warnings */
 #define TR_DISCARD_ALIGN(ptr, type) ((type)(void*)(ptr))
@@ -103,3 +88,8 @@ auto inline constexpr TR_SHA1_DIGEST_LEN = size_t{ 20 };
 auto inline constexpr TR_SHA1_DIGEST_STRLEN = size_t{ 40 };
 using tr_sha1_digest_t = std::array<std::byte, TR_SHA1_DIGEST_LEN>;
 using tr_sha1_digest_string_t = std::array<char, TR_SHA1_DIGEST_STRLEN + 1>; // +1 for '\0'
+
+auto inline constexpr TR_SHA256_DIGEST_LEN = size_t{ 32 };
+auto inline constexpr TR_SHA256_DIGEST_STRLEN = size_t{ 64 };
+using tr_sha256_digest_t = std::array<std::byte, TR_SHA256_DIGEST_LEN>;
+using tr_sha256_digest_string_t = std::array<char, TR_SHA256_DIGEST_STRLEN + 1>; // +1 for '\0'

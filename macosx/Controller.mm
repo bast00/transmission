@@ -2,11 +2,11 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
-#import <IOKit/IOMessage.h>
-#import <IOKit/pwr_mgt/IOPMLib.h>
-#import <Carbon/Carbon.h>
+@import IOKit;
+@import IOKit.pwr_mgt;
+@import Carbon;
 
-#import <Sparkle/Sparkle.h>
+@import Sparkle;
 
 #include <atomic> /* atomic, atomic_fetch_add_explicit, memory_order_relaxed */
 
@@ -40,6 +40,7 @@
 #import "GroupToolbarItem.h"
 #import "ShareToolbarItem.h"
 #import "ShareTorrentFileHelper.h"
+#import "Toolbar.h"
 #import "ToolbarSegmentedCell.h"
 #import "BlocklistDownloader.h"
 #import "StatusBarController.h"
@@ -121,7 +122,7 @@ typedef NS_ENUM(unsigned int, sortOrderTag) { //
 
 static void altSpeedToggledCallback([[maybe_unused]] tr_session* handle, bool active, bool byUser, void* controller)
 {
-    NSDictionary* dict = [[NSDictionary alloc] initWithObjects:@[ @(active), @(byUser) ] forKeys:@[ @"Active", @"ByUser" ]];
+    NSDictionary* dict = @{@"Active" : @(active), @"ByUser" : @(byUser)};
     [(__bridge Controller*)controller performSelectorOnMainThread:@selector(altSpeedToggledCallbackIsLimited:) withObject:dict
                                                     waitUntilDone:NO];
 }
@@ -358,6 +359,61 @@ static void removeKeRangerRansomware()
     }
 }
 
+void onStartQueue(tr_session* session, tr_torrent* tor, void* vself)
+{
+    auto* controller = (__bridge Controller*)(vself);
+    auto const hashstr = @(tr_torrentView(tor).hash_string);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        auto* const torrent = [controller torrentForHash:hashstr];
+        [torrent startQueue];
+    });
+}
+
+void onIdleLimitHit(tr_session* session, tr_torrent* tor, void* vself)
+{
+    auto* const controller = (__bridge Controller*)(vself);
+    auto const hashstr = @(tr_torrentView(tor).hash_string);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        auto* const torrent = [controller torrentForHash:hashstr];
+        [torrent idleLimitHit];
+    });
+}
+
+void onRatioLimitHit(tr_session* session, tr_torrent* tor, void* vself)
+{
+    auto* const controller = (__bridge Controller*)(vself);
+    auto const hashstr = @(tr_torrentView(tor).hash_string);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        auto* const torrent = [controller torrentForHash:hashstr];
+        [torrent ratioLimitHit];
+    });
+}
+
+void onMetadataCompleted(tr_session* session, tr_torrent* tor, void* vself)
+{
+    auto* const controller = (__bridge Controller*)(vself);
+    auto const hashstr = @(tr_torrentView(tor).hash_string);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        auto* const torrent = [controller torrentForHash:hashstr];
+        [torrent metadataRetrieved];
+    });
+}
+
+void onTorrentCompletenessChanged(tr_torrent* tor, tr_completeness status, bool wasRunning, void* vself)
+{
+    auto* const controller = (__bridge Controller*)(vself);
+    auto const hashstr = @(tr_torrentView(tor).hash_string);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        auto* const torrent = [controller torrentForHash:hashstr];
+        [torrent completenessChange:status wasRunning:wasRunning];
+    });
+}
+
 - (instancetype)init
 {
     if ((self = [super init]))
@@ -507,11 +563,16 @@ static void removeKeRangerRansomware()
 
         tr_formatter_mem_init(1000, kbString.UTF8String, mbString.UTF8String, gbString.UTF8String, tbString.UTF8String);
 
-        char const* configDir = tr_getDefaultConfigDir("Transmission");
-        _fLib = tr_sessionInit(configDir, YES, &settings);
-        tr_variantFree(&settings);
+        auto const default_config_dir = tr_getDefaultConfigDir("Transmission");
+        _fLib = tr_sessionInit(default_config_dir.c_str(), YES, &settings);
+        tr_variantClear(&settings);
+        _fConfigDirectory = @(default_config_dir.c_str());
 
-        _fConfigDirectory = [[NSString alloc] initWithUTF8String:configDir];
+        tr_sessionSetIdleLimitHitCallback(_fLib, onIdleLimitHit, (__bridge void*)(self));
+        tr_sessionSetQueueStartCallback(_fLib, onStartQueue, (__bridge void*)(self));
+        tr_sessionSetRatioLimitHitCallback(_fLib, onRatioLimitHit, (__bridge void*)(self));
+        tr_sessionSetMetadataCallback(_fLib, onMetadataCompleted, (__bridge void*)(self));
+        tr_sessionSetCompletenessCallback(_fLib, onTorrentCompletenessChanged, (__bridge void*)(self));
 
         NSApp.delegate = self;
 
@@ -555,7 +616,7 @@ static void removeKeRangerRansomware()
 
 - (void)awakeFromNib
 {
-    NSToolbar* toolbar = [[NSToolbar alloc] initWithIdentifier:@"TRMainToolbar"];
+    Toolbar* toolbar = [[Toolbar alloc] initWithIdentifier:@"TRMainToolbar"];
     toolbar.delegate = self;
     toolbar.allowsUserCustomization = YES;
     toolbar.autosavesConfiguration = YES;
@@ -568,7 +629,7 @@ static void removeKeRangerRansomware()
     self.fWindow.excludedFromWindowsMenu = YES;
 
     //make window primary view in fullscreen
-    [self.fWindow setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+    self.fWindow.collectionBehavior = NSWindowCollectionBehaviorFullScreenPrimary;
 
     //set table size
     BOOL const small = [self.fDefaults boolForKey:@"SmallView"];
@@ -647,14 +708,15 @@ static void removeKeRangerRansomware()
     //load previous transfers
     tr_ctor* ctor = tr_ctorNew(session);
     tr_ctorSetPaused(ctor, TR_FORCE, true); // paused by default; unpause below after checking state history
-    int n_torrents = 0;
-    tr_torrent** loaded_torrents = tr_sessionLoadTorrents(session, ctor, &n_torrents);
+    auto const n_torrents = tr_sessionLoadTorrents(session, ctor);
     tr_ctorFree(ctor);
 
     // process the loaded torrents
-    for (int i = 0; i < n_torrents; ++i)
+    auto torrents = std::vector<tr_torrent*>{};
+    torrents.resize(n_torrents);
+    tr_sessionGetAllTorrents(session, std::data(torrents), std::size(torrents));
+    for (auto* tor : torrents)
     {
-        struct tr_torrent* tor = loaded_torrents[i];
         NSString* location;
         if (tr_torrentGetDownloadDir(tor) != NULL)
         {
@@ -751,6 +813,8 @@ static void removeKeRangerRansomware()
 
     [nc addObserver:self selector:@selector(applyFilter) name:@"UpdateGroups" object:nil];
 
+    [nc addObserver:self selector:@selector(updateWindowAfterToolbarChange) name:@"ToolbarDidChange" object:nil];
+
     [self updateMainWindow];
 
     //timer to update the interface every second
@@ -767,9 +831,6 @@ static void removeKeRangerRansomware()
     {
         [self showInfo:nil];
     }
-
-    //redraw filterbar to avoid clipping
-    [NSNotificationCenter.defaultCenter postNotificationName:@"ResizeBar" object:nil];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification*)notification
@@ -803,9 +864,7 @@ static void removeKeRangerRansomware()
     //shamelessly ask for donations
     if ([self.fDefaults boolForKey:@"WarningDonate"])
     {
-        tr_session_stats stats;
-        tr_sessionGetCumulativeStats(self.fLib, &stats);
-        BOOL const firstLaunch = stats.sessionCount <= 1;
+        BOOL const firstLaunch = tr_sessionGetCumulativeStats(self.fLib).sessionCount <= 1;
 
         NSDate* lastDonateDate = [self.fDefaults objectForKey:@"DonateAskDate"];
         BOOL const timePassed = !lastDonateDate || (-1 * lastDonateDate.timeIntervalSinceNow) >= DONATE_NAG_TIME;
@@ -868,47 +927,57 @@ static void removeKeRangerRansomware()
 
 - (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication*)sender
 {
-    if (!self.fQuitRequested && [self.fDefaults boolForKey:@"CheckQuit"])
+    if (self.fQuitRequested || ![self.fDefaults boolForKey:@"CheckQuit"])
     {
-        NSUInteger active = 0, downloading = 0;
-        for (Torrent* torrent in self.fTorrents)
+        return NSTerminateNow;
+    }
+
+    NSUInteger active = 0, downloading = 0;
+    for (Torrent* torrent in self.fTorrents)
+    {
+        if (torrent.active && !torrent.stalled)
         {
-            if (torrent.active && !torrent.stalled)
+            active++;
+            if (!torrent.allDownloaded)
             {
-                active++;
-                if (!torrent.allDownloaded)
-                {
-                    downloading++;
-                }
+                downloading++;
             }
-        }
-
-        if ([self.fDefaults boolForKey:@"CheckQuitDownloading"] ? downloading > 0 : active > 0)
-        {
-            NSAlert* alert = [[NSAlert alloc] init];
-            alert.alertStyle = NSAlertStyleInformational;
-            alert.messageText = NSLocalizedString(@"Are you sure you want to quit?", "Confirm Quit panel -> title");
-            alert.informativeText = active == 1 ?
-                NSLocalizedString(
-                    @"There is an active transfer that will be paused on quit."
-                     " The transfer will automatically resume on the next launch.",
-                    "Confirm Quit panel -> message") :
-                [NSString stringWithFormat:NSLocalizedString(
-                                               @"There are %lu active transfers that will be paused on quit."
-                                                " The transfers will automatically resume on the next launch.",
-                                               "Confirm Quit panel -> message"),
-                                           active];
-            [alert addButtonWithTitle:NSLocalizedString(@"Quit", "Confirm Quit panel -> button")];
-            [alert addButtonWithTitle:NSLocalizedString(@"Cancel", "Confirm Quit panel -> button")];
-
-            [alert beginSheetModalForWindow:self.fWindow completionHandler:^(NSModalResponse returnCode) {
-                [NSApp replyToApplicationShouldTerminate:returnCode == NSAlertFirstButtonReturn];
-            }];
-            return NSTerminateLater;
         }
     }
 
-    return NSTerminateNow;
+    BOOL preventedByTransfer = [self.fDefaults boolForKey:@"CheckQuitDownloading"] ? downloading > 0 : active > 0;
+
+    if (!preventedByTransfer)
+    {
+        return NSTerminateNow;
+    }
+
+    NSAlert* alert = [[NSAlert alloc] init];
+    alert.alertStyle = NSAlertStyleInformational;
+    alert.messageText = NSLocalizedString(@"Are you sure you want to quit?", "Confirm Quit panel -> title");
+    alert.informativeText = active == 1 ?
+        NSLocalizedString(
+            @"There is an active transfer that will be paused on quit."
+             " The transfer will automatically resume on the next launch.",
+            "Confirm Quit panel -> message") :
+        [NSString stringWithFormat:NSLocalizedString(
+                                       @"There are %lu active transfers that will be paused on quit."
+                                        " The transfers will automatically resume on the next launch.",
+                                       "Confirm Quit panel -> message"),
+                                   active];
+    [alert addButtonWithTitle:NSLocalizedString(@"Quit", "Confirm Quit panel -> button")];
+    [alert addButtonWithTitle:NSLocalizedString(@"Cancel", "Confirm Quit panel -> button")];
+    alert.showsSuppressionButton = YES;
+
+    [alert beginSheetModalForWindow:self.fWindow completionHandler:^(NSModalResponse returnCode) {
+        if (alert.suppressionButton.state == NSControlStateValueOn)
+        {
+            [self.fDefaults setBool:NO forKey:@"CheckQuit"];
+        }
+        [NSApp replyToApplicationShouldTerminate:returnCode == NSAlertFirstButtonReturn];
+    }];
+
+    return NSTerminateLater;
 }
 
 - (void)applicationWillTerminate:(NSNotification*)notification
@@ -1021,7 +1090,7 @@ static void removeKeRangerRansomware()
         NSString* message = [NSString
             stringWithFormat:NSLocalizedString(@"It appears that the file \"%@\" from %@ is not a torrent file.", "Download not a torrent -> message"),
                              suggestedName,
-                             [download.request.URL.absoluteString stringByRemovingPercentEncoding]];
+                             download.request.URL.absoluteString.stringByRemovingPercentEncoding];
 
         NSAlert* alert = [[NSAlert alloc] init];
         [alert addButtonWithTitle:NSLocalizedString(@"OK", "Download not a torrent -> button")];
@@ -1046,7 +1115,7 @@ static void removeKeRangerRansomware()
 {
     NSString* message = [NSString
         stringWithFormat:NSLocalizedString(@"The torrent could not be downloaded from %@: %@.", "Torrent download failed -> message"),
-                         [download.request.URL.absoluteString stringByRemovingPercentEncoding],
+                         download.request.URL.absoluteString.stringByRemovingPercentEncoding,
                          error.localizedDescription];
 
     NSAlert* alert = [[NSAlert alloc] init];
@@ -1111,9 +1180,18 @@ static void removeKeRangerRansomware()
             continue;
         }
 
-        if (tr_torrentFindFromMetainfo(self.fLib, &metainfo) != nullptr) // dupe torrent
+        auto foundTorrent = tr_torrentFindFromMetainfo(self.fLib, &metainfo);
+        if (foundTorrent != nullptr) // dupe torrent
         {
-            [self duplicateOpenAlert:@(metainfo.name().c_str())];
+            if (tr_torrentHasMetadata(foundTorrent))
+            {
+                [self duplicateOpenAlert:@(metainfo.name().c_str())];
+            }
+            // foundTorrent is a magnet, fill it with file's metainfo
+            else if (!tr_torrentSetMetainfoFromFile(foundTorrent, &metainfo, torrentPath.UTF8String))
+            {
+                [self duplicateOpenAlert:@(metainfo.name().c_str())];
+            }
             continue;
         }
 
@@ -1342,7 +1420,7 @@ static void removeKeRangerRansomware()
 //called on by applescript
 - (void)open:(NSArray*)files
 {
-    NSDictionary* dict = [[NSDictionary alloc] initWithObjects:@[ files, @(ADD_MANUAL) ] forKeys:@[ @"Filenames", @"AddType" ]];
+    NSDictionary* dict = @{ @"Filenames" : files, @"AddType" : @(ADD_MANUAL) };
     [self performSelectorOnMainThread:@selector(openFilesWithDict:) withObject:dict waitUntilDone:NO];
 }
 
@@ -1365,9 +1443,10 @@ static void removeKeRangerRansomware()
                 [filenames addObject:url.path];
             }
 
-            NSDictionary* dictionary = [[NSDictionary alloc]
-                initWithObjects:@[ filenames, sender == self.fOpenIgnoreDownloadFolder ? @(ADD_SHOW_OPTIONS) : @(ADD_MANUAL) ]
-                        forKeys:@[ @"Filenames", @"AddType" ]];
+            NSDictionary* dictionary = @{
+                @"Filenames" : filenames,
+                @"AddType" : sender == self.fOpenIgnoreDownloadFolder ? @(ADD_SHOW_OPTIONS) : @(ADD_MANUAL)
+            };
             [self performSelectorOnMainThread:@selector(openFilesWithDict:) withObject:dictionary waitUntilDone:NO];
         }
     }];
@@ -1543,7 +1622,7 @@ static void removeKeRangerRansomware()
         [self.fWindow beginSheet:self.fUrlSheetController.window completionHandler:^(NSModalResponse returnCode) {
             if (returnCode == 1)
             {
-                NSString* urlString = [self.fUrlSheetController urlString];
+                NSString* urlString = self.fUrlSheetController.urlString;
                 urlString = [urlString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [self openURL:urlString];
@@ -3866,6 +3945,7 @@ static void removeKeRangerRansomware()
 - (void)endPreviewPanelControl:(QLPreviewPanel*)panel
 {
     self.fPreviewPanel = nil;
+    [self.fWindow.toolbar validateVisibleItems];
 }
 
 - (NSArray*)quickLookableTorrents
@@ -3993,7 +4073,7 @@ static void removeKeRangerRansomware()
 
     if (@available(macOS 11.0, *))
     {
-        button.bordered = NO;
+        //standard button sizes
     }
     else
     {
@@ -4081,18 +4161,37 @@ static void removeKeRangerRansomware()
     {
         GroupToolbarItem* groupItem = [[GroupToolbarItem alloc] initWithItemIdentifier:ident];
 
-        NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
-        segmentedControl.cell = [[ToolbarSegmentedCell alloc] init];
-        groupItem.view = segmentedControl;
-        NSSegmentedCell* segmentedCell = (NSSegmentedCell*)segmentedControl.cell;
-        segmentedControl.segmentStyle = NSSegmentStyleSeparated;
+        NSToolbarItem* itemPause = [self standardToolbarButtonWithIdentifier:TOOLBAR_PAUSE_ALL];
+        NSToolbarItem* itemResume = [self standardToolbarButtonWithIdentifier:TOOLBAR_RESUME_ALL];
 
+        NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
+        segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
+        segmentedControl.trackingMode = NSSegmentSwitchTrackingMomentary;
         segmentedControl.segmentCount = 2;
-        segmentedCell.trackingMode = NSSegmentSwitchTrackingMomentary;
+
+        [segmentedControl setTag:TOOLBAR_PAUSE_TAG forSegment:TOOLBAR_PAUSE_TAG];
+        [segmentedControl setImage:[NSImage systemSymbol:@"pause.circle.fill" withFallback:@"ToolbarPauseAllTemplate"]
+                        forSegment:TOOLBAR_PAUSE_TAG];
+        [segmentedControl setToolTip:NSLocalizedString(@"Pause all transfers", "All toolbar item -> tooltip")
+                          forSegment:TOOLBAR_PAUSE_TAG];
+
+        [segmentedControl setTag:TOOLBAR_RESUME_TAG forSegment:TOOLBAR_RESUME_TAG];
+        [segmentedControl setImage:[NSImage systemSymbol:@"arrow.clockwise.circle.fill" withFallback:@"ToolbarResumeAllTemplate"]
+                        forSegment:TOOLBAR_RESUME_TAG];
+        [segmentedControl setToolTip:NSLocalizedString(@"Resume all transfers", "All toolbar item -> tooltip")
+                          forSegment:TOOLBAR_RESUME_TAG];
+
+        groupItem.label = NSLocalizedString(@"Apply All", "All toolbar item -> label");
+        groupItem.paletteLabel = NSLocalizedString(@"Pause / Resume All", "All toolbar item -> palette label");
+        groupItem.visibilityPriority = NSToolbarItemVisibilityPriorityHigh;
+        groupItem.subitems = @[ itemPause, itemResume ];
+        groupItem.view = segmentedControl;
+        groupItem.target = self;
+        groupItem.action = @selector(allToolbarClicked:);
 
         if (@available(macOS 11.0, *))
         {
-            segmentedCell.bezeled = NO;
+            //standard segment size
         }
         else
         {
@@ -4101,31 +4200,10 @@ static void removeKeRangerRansomware()
             groupItem.maxSize = groupSize;
         }
 
-        groupItem.label = NSLocalizedString(@"Apply All", "All toolbar item -> label");
-        groupItem.paletteLabel = NSLocalizedString(@"Pause / Resume All", "All toolbar item -> palette label");
-        groupItem.target = self;
-        groupItem.action = @selector(allToolbarClicked:);
-
-        groupItem.identifiers = @[ TOOLBAR_PAUSE_ALL, TOOLBAR_RESUME_ALL ];
-
-        [segmentedCell setTag:TOOLBAR_PAUSE_TAG forSegment:TOOLBAR_PAUSE_TAG];
-        [segmentedControl setImage:[NSImage largeSystemSymbol:@"pause.circle.fill" withFallback:@"ToolbarPauseAllTemplate"]
-                        forSegment:TOOLBAR_PAUSE_TAG];
-        [segmentedCell setToolTip:NSLocalizedString(@"Pause all transfers", "All toolbar item -> tooltip") forSegment:TOOLBAR_PAUSE_TAG];
-
-        [segmentedCell setTag:TOOLBAR_RESUME_TAG forSegment:TOOLBAR_RESUME_TAG];
-        [segmentedControl setImage:[NSImage imageNamed:@"ToolbarResumeAllTemplate"] forSegment:TOOLBAR_RESUME_TAG];
-        [segmentedControl setImage:[NSImage largeSystemSymbol:@"arrow.clockwise.circle.fill" withFallback:@"ToolbarResumeAllTemplate"]
-                        forSegment:TOOLBAR_RESUME_TAG];
-        [segmentedCell setToolTip:NSLocalizedString(@"Resume all transfers", "All toolbar item -> tooltip")
-                       forSegment:TOOLBAR_RESUME_TAG];
-
         [groupItem createMenu:@[
             NSLocalizedString(@"Pause All", "All toolbar item -> label"),
             NSLocalizedString(@"Resume All", "All toolbar item -> label")
         ]];
-
-        groupItem.visibilityPriority = NSToolbarItemVisibilityPriorityHigh;
 
         return groupItem;
     }
@@ -4133,17 +4211,38 @@ static void removeKeRangerRansomware()
     {
         GroupToolbarItem* groupItem = [[GroupToolbarItem alloc] initWithItemIdentifier:ident];
 
-        NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
-        segmentedControl.cell = [[ToolbarSegmentedCell alloc] init];
-        groupItem.view = segmentedControl;
-        NSSegmentedCell* segmentedCell = (NSSegmentedCell*)segmentedControl.cell;
+        NSToolbarItem* itemPause = [self standardToolbarButtonWithIdentifier:TOOLBAR_PAUSE_SELECTED];
+        NSToolbarItem* itemResume = [self standardToolbarButtonWithIdentifier:TOOLBAR_RESUME_SELECTED];
 
+        NSSegmentedControl* segmentedControl = [[NSSegmentedControl alloc] initWithFrame:NSZeroRect];
+        segmentedControl.segmentStyle = NSSegmentStyleTexturedRounded;
+        segmentedControl.trackingMode = NSSegmentSwitchTrackingMomentary;
         segmentedControl.segmentCount = 2;
-        segmentedCell.trackingMode = NSSegmentSwitchTrackingMomentary;
+
+        [segmentedControl setTag:TOOLBAR_PAUSE_TAG forSegment:TOOLBAR_PAUSE_TAG];
+        [segmentedControl setImage:[NSImage systemSymbol:@"pause" withFallback:@"ToolbarPauseSelectedTemplate"]
+                        forSegment:TOOLBAR_PAUSE_TAG];
+        [segmentedControl setToolTip:NSLocalizedString(@"Pause selected transfers", "Selected toolbar item -> tooltip")
+                          forSegment:TOOLBAR_PAUSE_TAG];
+
+        [segmentedControl setTag:TOOLBAR_RESUME_TAG forSegment:TOOLBAR_RESUME_TAG];
+        [segmentedControl setImage:[NSImage systemSymbol:@"arrow.clockwise" withFallback:@"ToolbarResumeSelectedTemplate"]
+                        forSegment:TOOLBAR_RESUME_TAG];
+        [segmentedControl setToolTip:NSLocalizedString(@"Resume selected transfers", "Selected toolbar item -> tooltip")
+                          forSegment:TOOLBAR_RESUME_TAG];
+
+        groupItem.view = segmentedControl;
+        groupItem.label = NSLocalizedString(@"Apply Selected", "Selected toolbar item -> label");
+        groupItem.paletteLabel = NSLocalizedString(@"Pause / Resume Selected", "Selected toolbar item -> palette label");
+        groupItem.visibilityPriority = NSToolbarItemVisibilityPriorityHigh;
+        groupItem.subitems = @[ itemPause, itemResume ];
+        groupItem.view = segmentedControl;
+        groupItem.target = self;
+        groupItem.action = @selector(selectedToolbarClicked:);
 
         if (@available(macOS 11.0, *))
         {
-            segmentedCell.bezeled = NO;
+            //standard segment size
         }
         else
         {
@@ -4152,31 +4251,10 @@ static void removeKeRangerRansomware()
             groupItem.maxSize = groupSize;
         }
 
-        groupItem.label = NSLocalizedString(@"Apply Selected", "Selected toolbar item -> label");
-        groupItem.paletteLabel = NSLocalizedString(@"Pause / Resume Selected", "Selected toolbar item -> palette label");
-        groupItem.target = self;
-        groupItem.action = @selector(selectedToolbarClicked:);
-
-        groupItem.identifiers = @[ TOOLBAR_PAUSE_SELECTED, TOOLBAR_RESUME_SELECTED ];
-
-        [segmentedCell setTag:TOOLBAR_PAUSE_TAG forSegment:TOOLBAR_PAUSE_TAG];
-        [segmentedControl setImage:[NSImage largeSystemSymbol:@"pause" withFallback:@"ToolbarPauseSelectedTemplate"]
-                        forSegment:TOOLBAR_PAUSE_TAG];
-        [segmentedCell setToolTip:NSLocalizedString(@"Pause selected transfers", "Selected toolbar item -> tooltip")
-                       forSegment:TOOLBAR_PAUSE_TAG];
-
-        [segmentedCell setTag:TOOLBAR_RESUME_TAG forSegment:TOOLBAR_RESUME_TAG];
-        [segmentedControl setImage:[NSImage systemSymbol:@"arrow.clockwise" withFallback:@"ToolbarResumeSelectedTemplate"]
-                        forSegment:TOOLBAR_RESUME_TAG];
-        [segmentedCell setToolTip:NSLocalizedString(@"Resume selected transfers", "Selected toolbar item -> tooltip")
-                       forSegment:TOOLBAR_RESUME_TAG];
-
         [groupItem createMenu:@[
             NSLocalizedString(@"Pause Selected", "Selected toolbar item -> label"),
             NSLocalizedString(@"Resume Selected", "Selected toolbar item -> label")
         ]];
-
-        groupItem.visibilityPriority = NSToolbarItemVisibilityPriorityHigh;
 
         return groupItem;
     }
@@ -4234,9 +4312,8 @@ static void removeKeRangerRansomware()
 
 - (void)allToolbarClicked:(id)sender
 {
-    NSInteger tagValue = [sender isKindOfClass:[NSSegmentedControl class]] ?
-        [(NSSegmentedCell*)[sender cell] tagForSegment:[sender selectedSegment]] :
-        ((NSControl*)sender).tag;
+    NSInteger tagValue = [sender isKindOfClass:[NSSegmentedControl class]] ? [(NSSegmentedControl*)sender selectedTag] :
+                                                                             ((NSControl*)sender).tag;
     switch (tagValue)
     {
     case TOOLBAR_PAUSE_TAG:
@@ -4250,9 +4327,8 @@ static void removeKeRangerRansomware()
 
 - (void)selectedToolbarClicked:(id)sender
 {
-    NSInteger tagValue = [sender isKindOfClass:[NSSegmentedControl class]] ?
-        [(NSSegmentedCell*)[sender cell] tagForSegment:[sender selectedSegment]] :
-        ((NSControl*)sender).tag;
+    NSInteger tagValue = [sender isKindOfClass:[NSSegmentedControl class]] ? [(NSSegmentedControl*)sender selectedTag] :
+                                                                             ((NSControl*)sender).tag;
     switch (tagValue)
     {
     case TOOLBAR_PAUSE_TAG:
@@ -4377,8 +4453,8 @@ static void removeKeRangerRansomware()
     //set quick look item
     if ([ident isEqualToString:TOOLBAR_QUICKLOOK])
     {
-        ((NSButton*)toolbarItem.view).state = [QLPreviewPanel sharedPreviewPanelExists] && [QLPreviewPanel sharedPreviewPanel].visible;
-        return YES;
+        ((NSButton*)toolbarItem.view).state = self.fPreviewPanel != nil;
+        return self.fTableView.numberOfSelectedRows > 0;
     }
 
     //enable share item
@@ -4792,7 +4868,7 @@ static void removeKeRangerRansomware()
                                      NSLocalizedString(@"Close Quick Look", "View menu -> Quick Look");
         menuItem.title = title;
 
-        return YES;
+        return self.fTableView.numberOfSelectedRows > 0;
     }
 
     return YES;
@@ -4939,7 +5015,7 @@ static void removeKeRangerRansomware()
         [self.fStackView insertArrangedSubview:self.fFilterBar.view atIndex:idx];
 
         NSDictionary* views = @{ @"fFilterBar" : self.fFilterBar.view };
-        [self.fStackView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[fFilterBar(==21)]" options:0
+        [self.fStackView addConstraints:[NSLayoutConstraint constraintsWithVisualFormat:@"V:[fFilterBar(==23)]" options:0
                                                                                 metrics:nil
                                                                                   views:views]];
 
@@ -5011,6 +5087,46 @@ static void removeKeRangerRansomware()
     else
     {
         [self removeStackViewHeightConstraints];
+    }
+}
+
+- (void)updateWindowAfterToolbarChange
+{
+    //Hacky way of fixing an issue with showing the Toolbar
+    if (!self.isFullScreen)
+    {
+        //macOS Big Sur shows the unified toolbar by default
+        //and we only need to "fix" the layout when showing the toolbar
+        if (@available(macOS 11.0, *))
+        {
+            if (!self.fWindow.toolbar.isVisible)
+            {
+                [self removeStackViewHeightConstraints];
+            }
+        }
+        else
+        {
+            [self removeStackViewHeightConstraints];
+        }
+
+        //this fixes a macOS bug where on toggling the toolbar item bezels will show
+        [self hideToolBarBezels:YES];
+
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self updateForAutoSize];
+            [self hideToolBarBezels:NO];
+        });
+    }
+}
+
+- (void)hideToolBarBezels:(BOOL)hide
+{
+    if (@available(macOS 11.0, *))
+    {
+        for (NSToolbarItem* item in self.fWindow.toolbar.items)
+        {
+            item.view.hidden = hide;
+        }
     }
 }
 
@@ -5107,24 +5223,6 @@ static void removeKeRangerRansomware()
 - (void)windowDidExitFullScreen:(NSNotification*)notification
 {
     [self updateForAutoSize];
-}
-
-- (void)windowDidEndLiveResize:(NSNotification*)notification
-{
-    if (!self.isFullScreen && [self.fDefaults boolForKey:@"AutoSize"])
-    {
-        //Hacky way of fixing am issue with showing the Toolbar
-        CGFloat height = self.fWindow.contentView.frame.size.height;
-        CGFloat calculatedHeight = self.scrollViewHeight + self.mainWindowComponentHeight - 2.0;
-
-        if (height > calculatedHeight)
-        {
-            [self removeStackViewHeightConstraints];
-            dispatch_async(dispatch_get_main_queue(), ^{
-                [self updateForAutoSize];
-            });
-        }
-    }
 }
 
 - (void)updateForExpandCollapse

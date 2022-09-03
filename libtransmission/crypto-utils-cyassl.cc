@@ -3,11 +3,14 @@
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <memory>
 #include <mutex>
 
 #if defined(CYASSL_IS_WOLFSSL)
+// NOLINTBEGIN bugprone-macro-parentheses
 #define API_HEADER(x) <wolfssl/x>
 #define API_HEADER_CRYPT(x) API_HEADER(wolfcrypt/x)
+// NOLINTEND
 #define API(x) wc_##x
 #define API_VERSION_HEX LIBWOLFSSL_VERSION_HEX
 #else
@@ -18,10 +21,10 @@
 #endif
 
 #include API_HEADER(options.h)
-#include API_HEADER_CRYPT(dh.h)
 #include API_HEADER_CRYPT(error-crypt.h)
 #include API_HEADER_CRYPT(random.h)
 #include API_HEADER_CRYPT(sha.h)
+#include API_HEADER_CRYPT(sha256.h)
 #include API_HEADER(version.h)
 
 #include <fmt/core.h>
@@ -32,17 +35,14 @@
 #include "tr-assert.h"
 #include "utils.h"
 
-#define TR_CRYPTO_DH_SECRET_FALLBACK
+#if LIBWOLFSSL_VERSION_HEX >= 0x04000000 // 4.0.0
+using TR_WC_RNG = WC_RNG;
+#else
+using TR_WC_RNG = RNG;
+#endif
+
 #define TR_CRYPTO_X509_FALLBACK
 #include "crypto-utils-fallback.cc" // NOLINT(bugprone-suspicious-include)
-
-struct tr_dh_ctx
-{
-    DhKey dh;
-    word32 key_length;
-    uint8_t* private_key;
-    word32 private_key_length;
-};
 
 /***
 ****
@@ -91,9 +91,9 @@ static bool check_cyassl_result(int result, char const* file, int line)
 ****
 ***/
 
-static RNG* get_rng(void)
+static TR_WC_RNG* get_rng()
 {
-    static RNG rng;
+    static TR_WC_RNG rng;
     static bool rng_initialized = false;
 
     if (!rng_initialized)
@@ -115,156 +115,89 @@ static std::mutex rng_mutex_;
 ****
 ***/
 
-tr_sha1_ctx_t tr_sha1_init(void)
+namespace
 {
-    Sha* handle = tr_new(Sha, 1);
 
-    if (check_result(API(InitSha)(handle)))
+class Sha1Impl final : public tr_sha1
+{
+public:
+    Sha1Impl()
     {
-        return handle;
+        clear();
     }
 
-    tr_free(handle);
-    return nullptr;
+    ~Sha1Impl() override = default;
+
+    void clear() override
+    {
+        API(InitSha)(&handle_);
+    }
+
+    void add(void const* data, size_t data_length) override
+    {
+        if (data_length > 0U)
+        {
+            API(ShaUpdate)(&handle_, static_cast<byte const*>(data), data_length);
+        }
+    }
+
+    [[nodiscard]] tr_sha1_digest_t finish() override
+    {
+        auto digest = tr_sha1_digest_t{};
+        API(ShaFinal)(&handle_, reinterpret_cast<byte*>(std::data(digest)));
+        clear();
+        return digest;
+    }
+
+private:
+    API(Sha) handle_ = {};
+};
+
+class Sha256Impl final : public tr_sha256
+{
+public:
+    Sha256Impl()
+    {
+        clear();
+    }
+
+    ~Sha256Impl() override = default;
+
+    void clear() override
+    {
+        API(InitSha256)(&handle_);
+    }
+
+    void add(void const* data, size_t data_length) override
+    {
+        if (data_length > 0U)
+        {
+            API(Sha256Update)(&handle_, static_cast<byte const*>(data), data_length);
+        }
+    }
+
+    [[nodiscard]] tr_sha256_digest_t finish() override
+    {
+        auto digest = tr_sha256_digest_t{};
+        API(Sha256Final)(&handle_, reinterpret_cast<byte*>(std::data(digest)));
+        clear();
+        return digest;
+    }
+
+private:
+    API(Sha256) handle_ = {};
+};
+
+} // namespace
+
+std::unique_ptr<tr_sha1> tr_sha1::create()
+{
+    return std::make_unique<Sha1Impl>();
 }
 
-bool tr_sha1_update(tr_sha1_ctx_t raw_handle, void const* data, size_t data_length)
+std::unique_ptr<tr_sha256> tr_sha256::create()
 {
-    auto* handle = static_cast<Sha*>(raw_handle);
-    TR_ASSERT(handle != nullptr);
-
-    if (data_length == 0)
-    {
-        return true;
-    }
-
-    TR_ASSERT(data != nullptr);
-
-    return check_result(API(ShaUpdate)(handle, static_cast<byte const*>(data), data_length));
-}
-
-std::optional<tr_sha1_digest_t> tr_sha1_final(tr_sha1_ctx_t raw_handle)
-{
-    auto* handle = static_cast<Sha*>(raw_handle);
-    TR_ASSERT(handle != nullptr);
-
-    auto digest = tr_sha1_digest_t{};
-    auto* const digest_as_uchar = reinterpret_cast<unsigned char*>(std::data(digest));
-    auto const ok = check_result(API(ShaFinal)(handle, digest_as_uchar));
-    tr_free(handle);
-
-    return ok ? std::make_optional(digest) : std::nullopt;
-}
-
-/***
-****
-***/
-
-tr_dh_ctx_t tr_dh_new(
-    uint8_t const* prime_num,
-    size_t prime_num_length,
-    uint8_t const* generator_num,
-    size_t generator_num_length)
-{
-    TR_ASSERT(prime_num != nullptr);
-    TR_ASSERT(generator_num != nullptr);
-
-    struct tr_dh_ctx* handle = tr_new0(struct tr_dh_ctx, 1);
-
-    API(InitDhKey)(&handle->dh);
-
-    if (!check_result(API(DhSetKey)(&handle->dh, prime_num, prime_num_length, generator_num, generator_num_length)))
-    {
-        tr_free(handle);
-        return nullptr;
-    }
-
-    handle->key_length = prime_num_length;
-
-    return handle;
-}
-
-void tr_dh_free(tr_dh_ctx_t raw_handle)
-{
-    auto* handle = static_cast<struct tr_dh_ctx*>(raw_handle);
-
-    if (handle == nullptr)
-    {
-        return;
-    }
-
-    API(FreeDhKey)(&handle->dh);
-    tr_free(handle->private_key);
-    tr_free(handle);
-}
-
-bool tr_dh_make_key(tr_dh_ctx_t raw_handle, size_t /*private_key_length*/, uint8_t* public_key, size_t* public_key_length)
-{
-    TR_ASSERT(raw_handle != nullptr);
-    TR_ASSERT(public_key != nullptr);
-
-    auto* handle = static_cast<struct tr_dh_ctx*>(raw_handle);
-
-    if (handle->private_key == nullptr)
-    {
-        handle->private_key = static_cast<uint8_t*>(tr_malloc(handle->key_length));
-    }
-
-    auto const lock = std::lock_guard(rng_mutex_);
-
-    auto my_private_key_length = word32{};
-    auto my_public_key_length = word32{};
-    if (!check_result(API(DhGenerateKeyPair)(
-            &handle->dh,
-            get_rng(),
-            handle->private_key,
-            &my_private_key_length,
-            public_key,
-            &my_public_key_length)))
-    {
-        return false;
-    }
-
-    tr_dh_align_key(public_key, my_public_key_length, handle->key_length);
-
-    handle->private_key_length = my_private_key_length;
-
-    if (public_key_length != nullptr)
-    {
-        *public_key_length = handle->key_length;
-    }
-
-    return true;
-}
-
-tr_dh_secret_t tr_dh_agree(tr_dh_ctx_t raw_handle, uint8_t const* other_public_key, size_t other_public_key_length)
-{
-    TR_ASSERT(raw_handle != nullptr);
-    TR_ASSERT(other_public_key != nullptr);
-
-    auto* handle = static_cast<struct tr_dh_ctx*>(raw_handle);
-
-    tr_dh_secret* ret = tr_dh_secret_new(handle->key_length);
-
-    auto my_secret_key_length = word32{};
-    if (check_result(API(DhAgree)(
-            &handle->dh,
-            ret->key,
-            &my_secret_key_length,
-            handle->private_key,
-            handle->private_key_length,
-            other_public_key,
-            other_public_key_length)))
-    {
-        tr_dh_secret_align(ret, my_secret_key_length);
-    }
-    else
-    {
-        tr_dh_secret_free(ret);
-        ret = nullptr;
-    }
-
-    return ret;
+    return std::make_unique<Sha256Impl>();
 }
 
 /***

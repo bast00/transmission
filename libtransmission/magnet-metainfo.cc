@@ -20,7 +20,6 @@
 #include "magnet-metainfo.h"
 #include "tr-assert.h"
 #include "utils.h"
-#include "variant.h"
 #include "web-utils.h"
 
 using namespace std::literals;
@@ -58,7 +57,7 @@ void base32_to_sha1(uint8_t* out, char const* in, size_t const inlen)
     size_t offset = 0;
     for (size_t i = 0; i < inlen; ++i)
     {
-        int lookup = in[i] - '0';
+        int const lookup = in[i] - '0';
 
         /* Skip chars outside the lookup table */
         if (lookup < 0)
@@ -136,7 +135,7 @@ std::optional<tr_sha1_digest_t> parseHash(std::string_view sv)
 {
     // http://bittorrent.org/beps/bep_0009.html
     // Is the info-hash hex encoded, for a total of 40 characters.
-    // For compatability with existing links in the wild, clients
+    // For compatibility with existing links in the wild, clients
     // should also support the 32 character base32 encoded info-hash.
 
     if (auto const hash = tr_sha1_from_string(sv); hash)
@@ -144,6 +143,19 @@ std::optional<tr_sha1_digest_t> parseHash(std::string_view sv)
         return hash;
     }
     if (auto const hash = parseBase32Hash(sv); hash)
+    {
+        return hash;
+    }
+
+    return {};
+}
+
+std::optional<tr_sha256_digest_t> parseHash2(std::string_view sv)
+{
+    // http://bittorrent.org/beps/bep_0009.html
+    // Is the info-hash v2 hex encoded and tag removed, for a total of 64 characters.
+
+    if (auto const hash = tr_sha256_from_string(sv); hash)
     {
         return hash;
     }
@@ -164,19 +176,19 @@ tr_urlbuf tr_magnet_metainfo::magnet() const
     if (!std::empty(name_))
     {
         s += "&dn="sv;
-        tr_http_escape(std::back_inserter(s), name_, true);
+        tr_urlPercentEncode(std::back_inserter(s), name_);
     }
 
     for (auto const& tracker : this->announceList())
     {
         s += "&tr="sv;
-        tr_http_escape(std::back_inserter(s), tracker.announce.sv(), true);
+        tr_urlPercentEncode(std::back_inserter(s), tracker.announce.sv());
     }
 
     for (auto const& webseed : webseed_urls_)
     {
         s += "&ws="sv;
-        tr_http_escape(std::back_inserter(s), webseed, true);
+        tr_urlPercentEncode(std::back_inserter(s), webseed);
     }
 
     return s;
@@ -237,10 +249,20 @@ bool tr_magnet_metainfo::parseMagnet(std::string_view magnet_link, tr_error** er
         }
         else if (static auto constexpr ValPrefix = "urn:btih:"sv; key == "xt"sv && tr_strvStartsWith(value, ValPrefix))
         {
+            // v1 info-hash
             if (auto const hash = parseHash(value.substr(std::size(ValPrefix))); hash)
             {
                 this->info_hash_ = *hash;
                 got_hash = true;
+            }
+        }
+        else if (static auto constexpr ValPrefix2 = "urn:btmh:1220"sv; key == "xt"sv && tr_strvStartsWith(value, ValPrefix2))
+        {
+            // v2 info-hash
+            // The 1220 tag identifies the hash as sha256, removing tag before sending to parseHash2
+            if (auto const hash = parseHash2(value.substr(std::size(ValPrefix2))); hash)
+            {
+                this->info_hash2_ = *hash;
             }
         }
     }

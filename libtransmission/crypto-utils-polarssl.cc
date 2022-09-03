@@ -3,11 +3,14 @@
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <memory>
 #include <mutex>
 
 #if defined(POLARSSL_IS_MBEDTLS)
+// NOLINTBEGIN bugprone-macro-parentheses
 #define API_HEADER(x) <mbedtls/x>
 #define API(x) mbedtls_##x
+// NOLINTEND
 #define API_VERSION_NUMBER MBEDTLS_VERSION_NUMBER
 #else
 #define API_HEADER(x) <polarssl/x>
@@ -17,9 +20,9 @@
 
 #include API_HEADER(base64.h)
 #include API_HEADER(ctr_drbg.h)
-#include API_HEADER(dhm.h)
 #include API_HEADER(error.h)
 #include API_HEADER(sha1.h)
+#include API_HEADER(sha256.h)
 #include API_HEADER(version.h)
 
 #include <fmt/core.h>
@@ -30,7 +33,6 @@
 #include "tr-assert.h"
 #include "utils.h"
 
-#define TR_CRYPTO_DH_SECRET_FALLBACK
 #define TR_CRYPTO_X509_FALLBACK
 #include "crypto-utils-fallback.cc" // NOLINT(bugprone-suspicious-include)
 
@@ -40,7 +42,7 @@
 
 using api_ctr_drbg_context = API(ctr_drbg_context);
 using api_sha1_context = API(sha1_context);
-using api_dhm_context = API(dhm_context);
+using api_sha256_context = API(sha256_context);
 
 static void log_polarssl_error(int error_code, char const* file, int line)
 {
@@ -99,7 +101,7 @@ static int my_rand(void* /*context*/, unsigned char* buffer, size_t buffer_size)
     return 0;
 }
 
-static api_ctr_drbg_context* get_rng(void)
+static api_ctr_drbg_context* get_rng()
 {
     static api_ctr_drbg_context rng;
     static bool rng_initialized = false;
@@ -130,142 +132,131 @@ static std::recursive_mutex rng_mutex_;
 ****
 ***/
 
-tr_sha1_ctx_t tr_sha1_init(void)
+namespace
 {
-    api_sha1_context* handle = tr_new0(api_sha1_context, 1);
 
+class Sha1Impl final : public tr_sha1
+{
+public:
+    Sha1Impl()
+    {
+        clear();
+    }
+
+    ~Sha1Impl() override = default;
+
+    void clear() override
+    {
 #if API_VERSION_NUMBER >= 0x01030800
-    API(sha1_init)(handle);
+        API(sha1_init)(&handle_);
 #endif
 
-    API(sha1_starts)(handle);
-    return handle;
-}
-
-bool tr_sha1_update(tr_sha1_ctx_t raw_handle, void const* data, size_t data_length)
-{
-    auto* handle = static_cast<api_sha1_context*>(raw_handle);
-    TR_ASSERT(handle != nullptr);
-
-    if (data_length == 0)
-    {
-        return true;
-    }
-
-    TR_ASSERT(data != nullptr);
-
-    API(sha1_update)(handle, static_cast<unsigned char const*>(data), data_length);
-    return true;
-}
-
-std::optional<tr_sha1_digest_t> tr_sha1_final(tr_sha1_ctx_t raw_handle)
-{
-    auto* handle = static_cast<api_sha1_context*>(raw_handle);
-    TR_ASSERT(handle != nullptr);
-
-    auto digest = tr_sha1_digest_t{};
-    auto* const digest_as_uchar = reinterpret_cast<unsigned char*>(std::data(digest));
-    API(sha1_finish)(handle, digest_as_uchar);
-#if API_VERSION_NUMBER >= 0x01030800
-    API(sha1_free)(handle);
-#endif
-
-    tr_free(handle);
-    return digest;
-}
-
-/***
-****
-***/
-
-tr_dh_ctx_t tr_dh_new(
-    uint8_t const* prime_num,
-    size_t prime_num_length,
-    uint8_t const* generator_num,
-    size_t generator_num_length)
-{
-    TR_ASSERT(prime_num != nullptr);
-    TR_ASSERT(generator_num != nullptr);
-
-    api_dhm_context* handle = tr_new0(api_dhm_context, 1);
-
-#if API_VERSION_NUMBER >= 0x01030800
-    API(dhm_init)(handle);
-#endif
-
-    if (!check_result(API(mpi_read_binary)(&handle->P, prime_num, prime_num_length)) ||
-        !check_result(API(mpi_read_binary)(&handle->G, generator_num, generator_num_length)))
-    {
-        API(dhm_free)(handle);
-        return nullptr;
-    }
-
-    handle->len = prime_num_length;
-
-    return handle;
-}
-
-void tr_dh_free(tr_dh_ctx_t raw_handle)
-{
-    auto* handle = static_cast<api_dhm_context*>(raw_handle);
-
-    if (handle == nullptr)
-    {
-        return;
-    }
-
-    API(dhm_free)(handle);
-}
-
-bool tr_dh_make_key(tr_dh_ctx_t raw_handle, size_t private_key_length, uint8_t* public_key, size_t* public_key_length)
-{
-    TR_ASSERT(raw_handle != nullptr);
-    TR_ASSERT(public_key != nullptr);
-
-    auto* handle = static_cast<api_dhm_context*>(raw_handle);
-
-    if (public_key_length != nullptr)
-    {
-        *public_key_length = handle->len;
-    }
-
-    return check_result(API(dhm_make_public)(handle, private_key_length, public_key, handle->len, my_rand, nullptr));
-}
-
-tr_dh_secret_t tr_dh_agree(tr_dh_ctx_t raw_handle, uint8_t const* other_public_key, size_t other_public_key_length)
-{
-    TR_ASSERT(raw_handle != nullptr);
-    TR_ASSERT(other_public_key != nullptr);
-
-    auto* handle = static_cast<api_dhm_context*>(raw_handle);
-
-    if (!check_result(API(dhm_read_public)(handle, other_public_key, other_public_key_length)))
-    {
-        return nullptr;
-    }
-
-    tr_dh_secret* const ret = tr_dh_secret_new(handle->len);
-
-    size_t secret_key_length = handle->len;
-
-#if API_VERSION_NUMBER >= 0x02000000
-
-    if (!check_result(API(dhm_calc_secret)(handle, ret->key, secret_key_length, &secret_key_length, my_rand, nullptr)))
-#elif API_VERSION_NUMBER >= 0x01030000
-
-    if (!check_result(API(dhm_calc_secret)(handle, ret->key, &secret_key_length, my_rand, nullptr)))
+#if API_VERSION_NUMBER >= 0x02070000
+        mbedtls_sha1_starts_ret(&handle_);
 #else
-
-    if (!check_result(API(dhm_calc_secret)(handle, ret->key, &secret_key_length)))
+        API(sha1_starts)(&handle_);
 #endif
-    {
-        tr_dh_secret_free(ret);
-        return nullptr;
     }
 
-    tr_dh_secret_align(ret, secret_key_length);
+    void add(void const* data, size_t data_length) override
+    {
+        if (data_length > 0U)
+        {
+#if API_VERSION_NUMBER >= 0x02070000
+            mbedtls_sha1_update_ret(&handle_, static_cast<unsigned char const*>(data), data_length);
+#else
+            API(sha1_update)(&handle_, static_cast<unsigned char const*>(data), data_length);
+#endif
+        }
+    }
 
-    return ret;
+    [[nodiscard]] tr_sha1_digest_t finish() override
+    {
+        auto digest = tr_sha1_digest_t{};
+        auto* const digest_as_uchar = reinterpret_cast<unsigned char*>(std::data(digest));
+#if API_VERSION_NUMBER >= 0x02070000
+        mbedtls_sha1_finish_ret(&handle_, digest_as_uchar);
+#else
+        API(sha1_finish)(&handle_, digest_as_uchar);
+#endif
+
+#if API_VERSION_NUMBER >= 0x01030800
+        API(sha1_free)(&handle_);
+#endif
+
+        return digest;
+    }
+
+private:
+    mbedtls_sha1_context handle_ = {};
+};
+
+class Sha256Impl final : public tr_sha256
+{
+public:
+    Sha256Impl()
+    {
+        clear();
+    }
+
+    ~Sha256Impl() override = default;
+
+    void clear() override
+    {
+#if API_VERSION_NUMBER >= 0x01030800
+        API(sha256_init)(&handle_);
+#endif
+
+#if API_VERSION_NUMBER >= 0x02070000
+        mbedtls_sha256_starts_ret(&handle_, 0);
+#else
+        API(sha256_starts)(&handle_);
+#endif
+    }
+
+    void add(void const* data, size_t data_length) override
+    {
+        if (data_length > 0U)
+        {
+#if API_VERSION_NUMBER >= 0x02070000
+            mbedtls_sha256_update_ret(&handle_, static_cast<unsigned char const*>(data), data_length);
+#else
+            API(sha256_update)(&handle_, static_cast<unsigned char const*>(data), data_length);
+#endif
+        }
+    }
+
+    [[nodiscard]] tr_sha256_digest_t finish() override
+    {
+        auto digest = tr_sha256_digest_t{};
+        auto* const digest_as_uchar = reinterpret_cast<unsigned char*>(std::data(digest));
+#if API_VERSION_NUMBER >= 0x02070000
+        mbedtls_sha256_finish_ret(&handle_, digest_as_uchar);
+#else
+        API(sha256_finish)(&handle_, digest_as_uchar);
+#endif
+
+#if API_VERSION_NUMBER >= 0x01030800
+        API(sha256_free)(&handle_);
+#endif
+
+        return digest;
+    }
+
+private:
+    mbedtls_sha256_context handle_ = {};
+};
+
+} // namespace
+
+std::unique_ptr<tr_sha1> tr_sha1::create()
+{
+    return std::make_unique<Sha1Impl>();
+}
+
+std::unique_ptr<tr_sha256> tr_sha256::create()
+{
+    return std::make_unique<Sha256Impl>();
 }
 
 /***

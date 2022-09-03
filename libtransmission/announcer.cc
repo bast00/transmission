@@ -8,19 +8,16 @@
 #include <cinttypes> // PRIu64
 #include <climits> // INT_MAX
 #include <cstdio>
-#include <cstring>
 #include <ctime>
 #include <deque>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <set>
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include <event2/buffer.h>
-#include <event2/event.h> /* evtimer */
 
 #include <fmt/core.h>
 
@@ -57,7 +54,7 @@ static auto constexpr DefaultAnnounceMinIntervalSec = int{ 60 * 2 };
 static auto constexpr Numwant = int{ 80 };
 
 /* how often to announce & scrape */
-static auto constexpr UpkeepIntervalMsec = int{ 500 };
+static auto constexpr UpkeepInterval = 500ms;
 static auto constexpr MaxAnnouncesPerUpkeep = int{ 20 };
 static auto constexpr MaxScrapesPerUpkeep = int{ 20 };
 
@@ -71,21 +68,21 @@ static auto constexpr TrMultiscrapeStep = int{ 5 };
 ****
 ***/
 
-char const* tr_announce_event_get_string(tr_announce_event e)
+std::string_view tr_announce_event_get_string(tr_announce_event e)
 {
     switch (e)
     {
     case TR_ANNOUNCE_EVENT_COMPLETED:
-        return "completed";
+        return "completed"sv;
 
     case TR_ANNOUNCE_EVENT_STARTED:
-        return "started";
+        return "started"sv;
 
     case TR_ANNOUNCE_EVENT_STOPPED:
-        return "stopped";
+        return "stopped"sv;
 
     default:
-        return "";
+        return ""sv;
     }
 }
 
@@ -156,8 +153,6 @@ struct tr_scrape_info
     }
 };
 
-static void onUpkeepTimer(evutil_socket_t fd, short what, void* vannouncer);
-
 /**
  * "global" (per-tr_session) fields
  */
@@ -165,26 +160,25 @@ struct tr_announcer
 {
     explicit tr_announcer(tr_session* session_in)
         : session{ session_in }
-        , upkeep_timer{ evtimer_new(session_in->event_base, onUpkeepTimer, this) }
+        , upkeep_timer{ session_in->timerMaker().create() }
     {
-        scheduleNextUpdate();
+        upkeep_timer->setCallback([this]() { this->upkeep(); });
+        upkeep_timer->startRepeating(UpkeepInterval);
     }
 
-    ~tr_announcer()
-    {
-        event_free(upkeep_timer);
-    }
+    ~tr_announcer() = default;
+    tr_announcer(tr_announcer&&) = delete;
+    tr_announcer(tr_announcer const&) = delete;
+    tr_announcer& operator=(tr_announcer&&) = delete;
+    tr_announcer& operator=(tr_announcer const&) = delete;
 
-    void scheduleNextUpdate() const
-    {
-        tr_timerAddMsec(*this->upkeep_timer, UpkeepIntervalMsec);
-    }
+    void upkeep();
 
     std::set<tr_announce_request*, StopsCompare> stops;
     std::map<tr_interned_string, tr_scrape_info> scrape_info;
 
     tr_session* const session;
-    event* const upkeep_timer;
+    std::unique_ptr<libtransmission::Timer> const upkeep_timer;
 
     time_t tau_upkeep_at = 0;
 
@@ -205,7 +199,7 @@ static tr_scrape_info* tr_announcerGetScrapeInfo(tr_announcer* announcer, tr_int
 
 void tr_announcerInit(tr_session* session)
 {
-    TR_ASSERT(tr_isSession(session));
+    TR_ASSERT(session != nullptr);
 
     auto* a = new tr_announcer{ session };
 
@@ -482,7 +476,7 @@ private:
     [[nodiscard]] static time_t getNextScrapeTime(tr_session const* session, tr_tier const* tier, int interval)
     {
         // Maybe don't scrape paused torrents
-        if (!tier->isRunning && !session->scrapePausedTorrents)
+        if (!tier->isRunning && !session->shouldScrapePausedTorrents())
         {
             return 0;
         }
@@ -790,7 +784,7 @@ static void tier_announce_event_push(tr_tier* tier, tr_announce_event e, time_t 
          * dump everything leading up to it except "completed" */
         if (e == TR_ANNOUNCE_EVENT_STOPPED)
         {
-            bool has_completed = std::count(std::begin(events), std::end(events), TR_ANNOUNCE_EVENT_COMPLETED) != 0;
+            bool const has_completed = std::count(std::begin(events), std::end(events), TR_ANNOUNCE_EVENT_COMPLETED) != 0;
             events.clear();
             if (has_completed)
             {
@@ -1223,7 +1217,7 @@ static void tierAnnounce(tr_announcer* announcer, tr_tier* tier)
     time_t const now = tr_time();
 
     tr_torrent* tor = tier->tor;
-    tr_announce_event announce_event = tier_announce_event_pull(tier);
+    tr_announce_event const announce_event = tier_announce_event_pull(tier);
     tr_announce_request* req = announce_request_new(announcer, tor, tier, announce_event);
 
     auto* const data = new announce_data{ tier->id, now, announce_event, announcer->session, tor->isRunning };
@@ -1599,33 +1593,28 @@ static void scrapeAndAnnounceMore(tr_announcer* announcer)
     }
 }
 
-static void onUpkeepTimer(evutil_socket_t /*fd*/, short /*what*/, void* vannouncer)
+void tr_announcer::upkeep()
 {
-    auto* announcer = static_cast<tr_announcer*>(vannouncer);
-    tr_session* session = announcer->session;
     auto const lock = session->unique_lock();
 
-    bool const is_closing = session->isClosed;
+    bool const is_closing = session->isClosed();
     time_t const now = tr_time();
 
     /* maybe send out some "stopped" messages for closed torrents */
-    flushCloseMessages(announcer);
+    flushCloseMessages(this);
 
     /* maybe kick off some scrapes / announces whose time has come */
     if (!is_closing)
     {
-        scrapeAndAnnounceMore(announcer);
+        scrapeAndAnnounceMore(this);
     }
 
     /* TAU upkeep */
-    if (announcer->tau_upkeep_at <= now)
+    if (this->tau_upkeep_at <= now)
     {
-        announcer->tau_upkeep_at = now + TauUpkeepIntervalSecs;
+        this->tau_upkeep_at = now + TauUpkeepIntervalSecs;
         tr_tracker_udp_upkeep(session);
     }
-
-    // set up the next timer
-    announcer->scheduleNextUpdate();
 }
 
 /***

@@ -6,12 +6,13 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cstdlib> // for strtoul()
 #include <cstddef>
-#include <cstdlib>
 #include <limits>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include <fmt/format.h>
 
@@ -31,10 +32,9 @@ using namespace std::literals;
 ****
 ***/
 
-bool tr_addressIsIP(char const* str)
+bool tr_addressIsIP(char const* address)
 {
-    tr_address tmp;
-    return tr_address_from_string(&tmp, str);
+    return address != nullptr && tr_address::fromString(address).has_value();
 }
 
 char const* tr_webGetResponseStr(long code)
@@ -172,29 +172,6 @@ char const* tr_webGetResponseStr(long code)
     }
 }
 
-static bool is_rfc2396_alnum(uint8_t ch)
-{
-    return ('0' <= ch && ch <= '9') || ('A' <= ch && ch <= 'Z') || ('a' <= ch && ch <= 'z') || ch == '.' || ch == '-' ||
-        ch == '_' || ch == '~';
-}
-
-void tr_http_escape_sha1(char* out, tr_sha1_digest_t const& digest)
-{
-    for (auto const b : digest)
-    {
-        if (is_rfc2396_alnum(uint8_t(b)))
-        {
-            *out++ = (char)b;
-        }
-        else
-        {
-            out = fmt::format_to(out, FMT_STRING("%{:02x}"), unsigned(b));
-        }
-    }
-
-    *out = '\0';
-}
-
 //// URLs
 
 namespace
@@ -271,15 +248,14 @@ std::string_view getSiteName(std::string_view host)
         return host;
     }
 
-    // psl needs a zero-terminated hostname
-    auto const szhost = tr_urlbuf{ host };
-
     // is it an IP?
-    auto addr = tr_address{};
-    if (tr_address_from_string(&addr, std::data(szhost)))
+    if (auto const addr = tr_address::fromString(host); addr)
     {
         return host;
     }
+
+    // psl needs a zero-terminated hostname
+    auto const szhost = tr_urlbuf{ host };
 
     // is it a registered name?
     if (isAsciiNonUpperCase(host))

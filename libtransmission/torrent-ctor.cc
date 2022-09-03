@@ -7,6 +7,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "transmission.h"
@@ -19,7 +20,6 @@
 #include "torrent.h"
 #include "tr-assert.h"
 #include "utils.h"
-#include "variant.h"
 
 using namespace std::literals;
 
@@ -41,9 +41,9 @@ struct tr_ctor
 
     tr_priority_t priority = TR_PRI_NORMAL;
 
-    tr_torrent::labels_t labels = {};
+    tr_torrent::labels_t labels{};
 
-    struct optional_args optional_args[2];
+    std::array<struct optional_args, 2> optional_args{};
 
     std::string incomplete_dir;
     std::string torrent_filename;
@@ -86,7 +86,7 @@ bool tr_ctorSetMetainfoFromFile(tr_ctor* ctor, std::string_view filename, tr_err
 
 bool tr_ctorSetMetainfoFromFile(tr_ctor* ctor, char const* filename, tr_error** error)
 {
-    return tr_ctorSetMetainfoFromFile(ctor, std::string{ filename != nullptr ? filename : "" }, error);
+    return tr_ctorSetMetainfoFromFile(ctor, std::string_view{ filename != nullptr ? filename : "" }, error);
 }
 
 bool tr_ctorSetMetainfo(tr_ctor* ctor, char const* metainfo, size_t len, tr_error** error)
@@ -352,9 +352,9 @@ tr_ctor* tr_ctorNew(tr_session const* session)
 {
     auto* const ctor = new tr_ctor{ session };
 
-    tr_ctorSetDeleteSource(ctor, tr_sessionGetDeleteSource(session));
-    tr_ctorSetPaused(ctor, TR_FALLBACK, tr_sessionGetPaused(session));
-    tr_ctorSetPeerLimit(ctor, TR_FALLBACK, session->peerLimitPerTorrent);
+    tr_ctorSetDeleteSource(ctor, session->shouldDeleteSource());
+    tr_ctorSetPaused(ctor, TR_FALLBACK, session->shouldPauseAddedTorrents());
+    tr_ctorSetPeerLimit(ctor, TR_FALLBACK, session->peerLimitPerTorrent());
     tr_ctorSetDownloadDir(ctor, TR_FALLBACK, tr_sessionGetDownloadDir(session));
 
     return ctor;

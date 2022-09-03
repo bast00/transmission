@@ -20,6 +20,7 @@ include(CheckIncludeFile)
 include(CheckIncludeFiles)
 include(CheckFunctionExists)
 include(CheckLibraryExists)
+include(CheckSymbolExists)
 include(ExternalProject)
 include(GNUInstallDirs)
 include(TrMacros)
@@ -47,7 +48,7 @@ tr_auto_option(USE_SYSTEM_UTP       "Use system utp library" AUTO)
 tr_auto_option(USE_SYSTEM_B64       "Use system b64 library" AUTO)
 tr_auto_option(USE_SYSTEM_PSL       "Use system psl library" AUTO)
 tr_list_option(USE_QT_VERSION       "Use specific Qt version" AUTO 5 6)
-tr_list_option(WITH_CRYPTO          "Use specified crypto library" AUTO openssl cyassl polarssl ccrypto)
+tr_list_option(WITH_CRYPTO          "Use specified crypto library" AUTO ccrypto cyassl mbedtls openssl polarssl wolfssl)
 tr_auto_option(WITH_INOTIFY         "Enable inotify support (on systems that support it)" AUTO)
 tr_auto_option(WITH_KQUEUE          "Enable kqueue support (on systems that support it)" AUTO)
 tr_auto_option(WITH_LIBAPPINDICATOR "Use libappindicator in GTK+ client" AUTO)
@@ -124,7 +125,7 @@ set(GLIB_MINIMUM            2.50.1)
 set(GTK_MINIMUM             3.24.0)
 set(LIBAPPINDICATOR_MINIMUM 0.4.90)
 set(OPENSSL_MINIMUM         0.9.7)
-set(POLARSSL_MINIMUM        1.2)
+set(POLARSSL_MINIMUM        1.3)
 set(QT_MINIMUM              5.6)
 
 if(WIN32)
@@ -153,6 +154,7 @@ find_package(Fmt)
 add_definitions(-DFMT_HEADER_ONLY -DFMT_EXCEPTIONS=0)
 include_directories(SYSTEM ${LIBFMT_INCLUDE_DIRS})
 
+find_package(WideInteger)
 find_package(FastFloat)
 find_package(UtfCpp)
 find_package(Threads)
@@ -188,7 +190,7 @@ if(WITH_CRYPTO STREQUAL "AUTO" OR WITH_CRYPTO STREQUAL "openssl")
         set(CRYPTO_LIBRARIES ${OPENSSL_LIBRARIES})
     endif()
 endif()
-if(WITH_CRYPTO STREQUAL "AUTO" OR WITH_CRYPTO STREQUAL "cyassl")
+if(WITH_CRYPTO STREQUAL "AUTO" OR WITH_CRYPTO STREQUAL "cyassl" OR WITH_CRYPTO STREQUAL "wolfssl")
     tr_get_required_flag(WITH_CRYPTO CYASSL_IS_REQUIRED)
     find_package(CyaSSL ${CYASSL_MINIMUM} ${CYASSL_IS_REQUIRED})
     tr_fixup_list_option(WITH_CRYPTO "cyassl" CYASSL_FOUND "AUTO" CYASSL_IS_REQUIRED)
@@ -198,7 +200,7 @@ if(WITH_CRYPTO STREQUAL "AUTO" OR WITH_CRYPTO STREQUAL "cyassl")
         set(CRYPTO_LIBRARIES ${CYASSL_LIBRARIES})
     endif()
 endif()
-if(WITH_CRYPTO STREQUAL "AUTO" OR WITH_CRYPTO STREQUAL "polarssl")
+if(WITH_CRYPTO STREQUAL "AUTO" OR WITH_CRYPTO STREQUAL "polarssl" OR WITH_CRYPTO STREQUAL "mbedtls")
     tr_get_required_flag(WITH_CRYPTO POLARSSL_IS_REQUIRED)
     find_package(PolarSSL ${POLARSSL_MINIMUM} ${POLARSSL_IS_REQUIRED})
     tr_fixup_list_option(WITH_CRYPTO "polarssl" POLARSSL_FOUND "AUTO" POLARSSL_IS_REQUIRED)
@@ -362,7 +364,9 @@ tr_add_external_auto_library(DHT dht dht)
 tr_add_external_auto_library(PSL libpsl psl)
 
 if(ENABLE_UTP)
-    tr_add_external_auto_library(UTP libutp utp)
+    tr_add_external_auto_library(UTP libutp utp
+        CMAKE_ARGS
+            -DLIBUTP_BUILD_PROGRAMS=OFF)
 
     if(UTP_UPSTREAM_TARGET)
         # Use C++ linker for anything that depends on static libutp
@@ -375,8 +379,6 @@ if(ENABLE_UTP)
 endif()
 
 tr_add_external_auto_library(B64 libb64 b64)
-
-add_subdirectory(third-party/arc4)
 
 if(WITH_INOTIFY)
     tr_get_required_flag(WITH_INOTIFY INOTIFY_IS_REQUIRED)
@@ -563,7 +565,6 @@ endforeach()
 
 set(NEEDED_FUNCTIONS
     _configthreadlocale
-    canonicalize_file_name
     copy_file_range
     copyfile
     daemon
@@ -610,6 +611,8 @@ check_library_exists(m sqrt "" HAVE_LIBM)
 if(HAVE_LIBM)
     set(LIBM_LIBRARY m)
 endif()
+
+check_symbol_exists(SO_REUSEPORT "sys/types.h;sys/socket.h" HAVE_SO_REUSEPORT)
 
 set(TR_NETWORK_LIBRARIES)
 if(WIN32)
@@ -679,7 +682,8 @@ if(ENABLE_DAEMON OR ENABLE_GTK OR ENABLE_QT)
 endif()
 
 if(INSTALL_DOC)
-    install(FILES AUTHORS COPYING NEWS.md README.md docs/rpc-spec.md extras/send-email-when-torrent-done.sh DESTINATION ${CMAKE_INSTALL_DOCDIR})
+    install(FILES AUTHORS COPYING README.md docs/rpc-spec.md extras/send-email-when-torrent-done.sh DESTINATION ${CMAKE_INSTALL_DOCDIR})
+    install(DIRECTORY news DESTINATION ${CMAKE_INSTALL_DOCDIR})
 endif()
 
 if(MSVC AND ENABLE_DAEMON AND ENABLE_QT AND ENABLE_UTILS AND WITH_CRYPTO STREQUAL "openssl")

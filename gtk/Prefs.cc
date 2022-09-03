@@ -3,7 +3,6 @@
 // License text can be found in the licenses/ folder.
 
 #include <errno.h>
-#include <stdlib.h> /* strtol() */
 #include <string>
 #include <string_view>
 
@@ -11,6 +10,8 @@
 #include <glibmm/i18n.h>
 
 #include <libtransmission/transmission.h>
+
+#include <libtransmission/utils.h>
 #include <libtransmission/variant.h>
 
 #include "Prefs.h"

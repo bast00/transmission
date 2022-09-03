@@ -4,14 +4,15 @@
 // License text can be found in the licenses/ folder.
 
 #include <algorithm>
+#include <array>
 #include <condition_variable>
 #include <list>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <string>
-#include <string_view>
 #include <thread>
+#include <utility>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -27,6 +28,7 @@
 
 #include "crypto-utils.h"
 #include "log.h"
+#include "peer-io.h"
 #include "tr-assert.h"
 #include "utils.h"
 #include "web.h"
@@ -57,14 +59,14 @@ static CURLcode ssl_context_func(CURL* /*curl*/, void* ssl_ctx, void* /*user_dat
         return CURLE_OK;
     }
 
-    static LPCWSTR const sys_store_names[] = {
+    static auto constexpr SysStoreNames = std::array<LPCWSTR, 2>{
         L"CA",
         L"ROOT",
     };
 
-    for (size_t i = 0; i < TR_N_ELEMENTS(sys_store_names); ++i)
+    for (auto& sys_store_name : SysStoreNames)
     {
-        HCERTSTORE const sys_cert_store = CertOpenSystemStoreW(0, sys_store_names[i]);
+        HCERTSTORE const sys_cert_store = CertOpenSystemStoreW(0, sys_store_name);
         if (sys_cert_store == nullptr)
         {
             continue;
@@ -110,10 +112,9 @@ public:
     {
         std::call_once(curl_init_flag, curlInit);
 
-        if (auto* bundle = tr_env_get_string("CURL_CA_BUNDLE", nullptr); bundle != nullptr)
+        if (auto bundle = tr_env_get_string("CURL_CA_BUNDLE"); !std::empty(bundle))
         {
-            curl_ca_bundle = bundle;
-            tr_free(bundle);
+            curl_ca_bundle = std::move(bundle);
         }
 
         shareEverything();
@@ -140,6 +141,11 @@ public:
         auto const lock = std::unique_lock(queued_tasks_mutex);
         curl_thread = std::make_unique<std::thread>(curlThreadFunc, this);
     }
+
+    Impl(Impl&&) = delete;
+    Impl(Impl const&) = delete;
+    Impl& operator=(Impl&&) = delete;
+    Impl& operator=(Impl const&) = delete;
 
     ~Impl()
     {
@@ -171,12 +177,11 @@ public:
         queued_tasks_cv.notify_one();
     }
 
-private:
     class Task
     {
     private:
-        std::shared_ptr<evbuffer> const privbuf{ evbuffer_new(), evbuffer_free };
-        std::shared_ptr<CURL> const easy_handle{ curl_easy_init(), curl_easy_cleanup };
+        tr_evbuffer_ptr const privbuf = tr_evbuffer_ptr{ evbuffer_new() };
+        std::unique_ptr<CURL, void (*)(CURL*)> const easy_handle{ curl_easy_init(), curl_easy_cleanup };
         tr_web::FetchOptions options;
 
     public:
@@ -242,6 +247,25 @@ private:
                 return CURL_IPRESOLVE_V6;
             default:
                 return CURL_IPRESOLVE_WHATEVER;
+            }
+        }
+
+        [[nodiscard]] auto publicAddress() const
+        {
+            switch (options.ip_proto)
+            {
+            case FetchOptions::IPProtocol::V4:
+                return impl.mediator.publicAddressV4();
+            case FetchOptions::IPProtocol::V6:
+                return impl.mediator.publicAddressV6();
+            default:
+                auto ip = impl.mediator.publicAddressV4();
+                if (ip == std::nullopt)
+                {
+                    ip = impl.mediator.publicAddressV6();
+                }
+
+                return ip;
             }
         }
 
@@ -390,7 +414,7 @@ private:
         (void)curl_easy_setopt(e, CURLOPT_WRITEFUNCTION, onDataReceived);
         (void)curl_easy_setopt(e, CURLOPT_MAXREDIRS, MaxRedirects);
 
-        if (auto const addrstr = impl->mediator.publicAddress(); addrstr)
+        if (auto const addrstr = task->publicAddress(); addrstr)
         {
             (void)curl_easy_setopt(e, CURLOPT_INTERFACE, addrstr->c_str());
         }
@@ -442,7 +466,7 @@ private:
     // the thread started by Impl.curl_thread runs this function
     static void curlThreadFunc(Impl* impl)
     {
-        auto const multi = std::shared_ptr<CURLM>(curl_multi_init(), curl_multi_cleanup);
+        auto const multi = std::unique_ptr<CURLM, CURLMcode (*)(CURLM*)>(curl_multi_init(), curl_multi_cleanup);
 
         auto running_tasks = int{ 0 };
         auto repeats = unsigned{};
@@ -539,8 +563,7 @@ private:
         impl->is_closed_ = true;
     }
 
-private:
-    std::shared_ptr<CURLSH> const curlsh_{ curl_share_init(), curl_share_cleanup };
+    std::unique_ptr<CURLSH, CURLSHcode (*)(CURLSH*)> const curlsh_{ curl_share_init(), curl_share_cleanup };
 
     std::mutex queued_tasks_mutex;
     std::condition_variable queued_tasks_cv;

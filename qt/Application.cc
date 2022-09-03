@@ -9,6 +9,7 @@
 #include <array>
 #include <ctime>
 #include <memory>
+#include <utility>
 
 #include <QIcon>
 #include <QLibraryInfo>
@@ -24,8 +25,9 @@
 #include <QDBusReply>
 #endif
 
-#include <libtransmission/tr-getopt.h>
 #include <libtransmission/transmission.h>
+
+#include <libtransmission/tr-getopt.h>
 #include <libtransmission/utils.h>
 #include <libtransmission/version.h>
 
@@ -76,6 +78,18 @@ bool loadTranslation(QTranslator& translator, QString const& name, QLocale const
     return false;
 }
 
+[[nodiscard]] auto makeWindowIcon()
+{
+    // first, try to load it from the system theme
+    if (auto icon = QIcon::fromTheme(QStringLiteral("transmission")); !icon.isNull())
+    {
+        return icon;
+    }
+
+    // if that fails, use our own as the fallback
+    return QIcon{ QStringLiteral(":/icons/transmission.svg") };
+}
+
 } // namespace
 
 Application::Application(int& argc, char** argv)
@@ -96,19 +110,7 @@ Application::Application(int& argc, char** argv)
 
 #endif
 
-    // set the default icon
-    QIcon icon = QIcon::fromTheme(QStringLiteral("transmission"));
-
-    if (icon.isNull())
-    {
-        static std::array<int, 11> constexpr Sizes = { 16, 22, 24, 32, 48, 64, 72, 96, 128, 192, 256 };
-        for (auto const size : Sizes)
-        {
-            icon.addPixmap(QPixmap(QStringLiteral(":/icons/transmission-%1.png").arg(size)));
-        }
-    }
-
-    setWindowIcon(icon);
+    setWindowIcon(makeWindowIcon());
 
 #ifdef __APPLE__
     setAttribute(Qt::AA_DontShowIconsInMenus);
@@ -172,7 +174,7 @@ Application::Application(int& argc, char** argv)
 
     // try to delegate the work to an existing copy of Transmission
     // before starting ourselves...
-    InteropHelper interop_client;
+    InteropHelper const interop_client;
 
     if (interop_client.isConnected())
     {
@@ -218,11 +220,11 @@ Application::Application(int& argc, char** argv)
     // set the fallback config dir
     if (config_dir.isNull())
     {
-        config_dir = QString::fromUtf8(tr_getDefaultConfigDir("transmission"));
+        config_dir = QString::fromStdString(tr_getDefaultConfigDir("transmission"));
     }
 
     // ensure our config directory exists
-    QDir dir(config_dir);
+    QDir const dir(config_dir);
 
     if (!dir.exists())
     {
@@ -663,6 +665,6 @@ int tr_main(int argc, char** argv)
     Application::setAttribute(Qt::AA_EnableHighDpiScaling);
     Application::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
-    Application app(argc, argv);
+    Application const app(argc, argv);
     return QApplication::exec();
 }

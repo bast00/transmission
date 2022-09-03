@@ -2,12 +2,15 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
+#include <vector>
+
 #include <libtransmission/transmission.h>
 #include <libtransmission/utils.h>
 
 #import "PiecesView.h"
 #import "Torrent.h"
 #import "InfoWindowController.h"
+#import "NSApplicationAdditions.h"
 
 #define MAX_ACROSS 18
 #define BETWEEN 1.0
@@ -25,10 +28,7 @@ enum
 
 @interface PiecesView ()
 
-@property(nonatomic) int8_t* fPieces;
-
-@property(nonatomic) NSColor* fGreenAvailabilityColor;
-@property(nonatomic) NSColor* fBluePieceColor;
+@property(nonatomic) std::vector<int8_t> fPieces;
 
 @property(nonatomic) NSInteger fNumPieces;
 @property(nonatomic) NSInteger fAcross;
@@ -39,19 +39,26 @@ enum
 
 @implementation PiecesView
 
+- (void)drawRect:(NSRect)dirtyRect
+{
+    [[NSColor.controlTextColor colorWithAlphaComponent:0.2] setFill];
+    NSRectFill(dirtyRect);
+    [super drawRect:dirtyRect];
+}
+
 - (void)awakeFromNib
 {
-    //store box colors
-    self.fGreenAvailabilityColor = [NSColor colorWithCalibratedRed:0.0 green:1.0 blue:0.4 alpha:1.0];
-    self.fBluePieceColor = [NSColor colorWithCalibratedRed:0.0 green:0.4 blue:0.8 alpha:1.0];
-
-    //actually draw the box
     self.torrent = nil;
+}
+
+- (void)viewDidChangeEffectiveAppearance
+{
+    self.torrent = _torrent;
+    [self updateView];
 }
 
 - (void)dealloc
 {
-    tr_free(_fPieces);
 }
 
 - (void)setTorrent:(Torrent*)torrent
@@ -71,13 +78,6 @@ enum
     }
 
     NSImage* back = [[NSImage alloc] initWithSize:self.bounds.size];
-    [back lockFocus];
-
-    NSGradient* gradient = [[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedWhite:0.0 alpha:0.4]
-                                                         endingColor:[NSColor colorWithCalibratedWhite:0.2 alpha:0.4]];
-    [gradient drawInRect:self.bounds angle:90.0];
-    [back unlockFocus];
-
     self.image = back;
 
     [self setNeedsDisplay];
@@ -85,8 +85,7 @@ enum
 
 - (void)clearView
 {
-    tr_free(self.fPieces);
-    self.fPieces = NULL;
+    self.fPieces.clear();
 }
 
 - (void)updateView
@@ -97,31 +96,33 @@ enum
     }
 
     //determine if first time
-    BOOL const first = self.fPieces == NULL;
+    BOOL const first = std::empty(self.fPieces);
     if (first)
     {
-        self.fPieces = (int8_t*)tr_malloc(self.fNumPieces * sizeof(int8_t));
+        _fPieces.resize(self.fNumPieces);
     }
 
-    int8_t* pieces = NULL;
-    float* piecesPercent = NULL;
+    auto pieces = std::vector<int8_t>{};
+    auto piecesPercent = std::vector<float>{};
 
     BOOL const showAvailability = [NSUserDefaults.standardUserDefaults boolForKey:@"PiecesViewShowAvailability"];
     if (showAvailability)
     {
-        pieces = (int8_t*)tr_malloc(self.fNumPieces * sizeof(int8_t));
-        [self.torrent getAvailability:pieces size:self.fNumPieces];
+        pieces.resize(self.fNumPieces);
+        [self.torrent getAvailability:std::data(pieces) size:std::size(pieces)];
     }
     else
     {
-        piecesPercent = (float*)tr_malloc(self.fNumPieces * sizeof(float));
-        [self.torrent getAmountFinished:piecesPercent size:self.fNumPieces];
+        piecesPercent.resize(self.fNumPieces);
+        [self.torrent getAmountFinished:std::data(piecesPercent) size:std::size(piecesPercent)];
     }
 
     NSImage* image = self.image;
 
     NSRect fillRects[self.fNumPieces];
     NSColor* fillColors[self.fNumPieces];
+
+    NSColor* defaultColor = NSApp.darkMode ? NSColor.blackColor : NSColor.whiteColor;
 
     NSInteger usedCount = 0;
 
@@ -135,12 +136,12 @@ enum
             {
                 if (!first && self.fPieces[index] != PIECE_FLASHING)
                 {
-                    pieceColor = NSColor.orangeColor;
+                    pieceColor = NSColor.systemOrangeColor;
                     self.fPieces[index] = PIECE_FLASHING;
                 }
                 else
                 {
-                    pieceColor = self.fBluePieceColor;
+                    pieceColor = NSColor.systemBlueColor;
                     self.fPieces[index] = PIECE_FINISHED;
                 }
             }
@@ -149,7 +150,7 @@ enum
         {
             if (first || self.fPieces[index] != PIECE_NONE)
             {
-                pieceColor = NSColor.whiteColor;
+                pieceColor = defaultColor;
                 self.fPieces[index] = PIECE_NONE;
             }
         }
@@ -157,7 +158,7 @@ enum
         {
             if (first || self.fPieces[index] != PIECE_HIGH_PEERS)
             {
-                pieceColor = self.fGreenAvailabilityColor;
+                pieceColor = NSColor.systemGreenColor;
                 self.fPieces[index] = PIECE_HIGH_PEERS;
             }
         }
@@ -165,8 +166,8 @@ enum
         {
             //always redraw "mixed"
             CGFloat percent = showAvailability ? (CGFloat)pieces[index] / HIGH_PEERS : piecesPercent[index];
-            NSColor* fullColor = showAvailability ? self.fGreenAvailabilityColor : self.fBluePieceColor;
-            pieceColor = [NSColor.whiteColor blendedColorWithFraction:percent ofColor:fullColor];
+            NSColor* fullColor = showAvailability ? NSColor.systemGreenColor : NSColor.systemBlueColor;
+            pieceColor = [defaultColor blendedColorWithFraction:percent ofColor:fullColor];
             self.fPieces[index] = PIECE_SOME;
         }
 
@@ -192,9 +193,6 @@ enum
         [image unlockFocus];
         [self setNeedsDisplay];
     }
-
-    tr_free(pieces);
-    tr_free(piecesPercent);
 }
 
 - (BOOL)acceptsFirstMouse:(NSEvent*)event

@@ -4,14 +4,17 @@
 // License text can be found in the licenses/ folder.
 
 #include <algorithm>
+#include <chrono>
 #include <iterator>
 #include <memory>
+#include <numeric> // std::accumulate()
 #include <set>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include <event2/buffer.h>
-#include <event2/event.h>
 
 #include <fmt/format.h>
 
@@ -19,6 +22,7 @@
 
 #include "bandwidth.h"
 #include "cache.h"
+#include "peer-io.h"
 #include "peer-mgr.h"
 #include "torrent.h"
 #include "trevent.h" /* tr_runInEventThread() */
@@ -39,7 +43,7 @@ void on_idle(tr_webseed* w);
 class tr_webseed_task
 {
 private:
-    std::shared_ptr<evbuffer> const content_{ evbuffer_new(), evbuffer_free };
+    tr_evbuffer_ptr const content_{ evbuffer_new() };
 
 public:
     tr_webseed_task(tr_torrent* tor, tr_webseed* webseed_in, tr_block_span_t blocks_in)
@@ -149,6 +153,9 @@ private:
     time_t paused_until = 0;
 };
 
+void task_request_next_chunk(tr_webseed_task* task);
+void onBufferGotData(evbuffer* /*buf*/, evbuffer_cb_info const* info, void* vtask);
+
 class tr_webseed : public tr_peer
 {
 public:
@@ -158,15 +165,16 @@ public:
         , base_url{ url }
         , callback{ callback_in }
         , callback_data{ callback_data_in }
-        , bandwidth(&tor->bandwidth_)
-        , pulse_timer(evtimer_new(session->event_base, &tr_webseed::onTimer, this), event_free)
+        , bandwidth_(&tor->bandwidth_)
+        , idle_timer(session->timerMaker().create([this]() { on_idle(this); }))
     {
-        // init parent bits
-        have.setHasAll();
-        tr_peerUpdateProgress(tor, this);
-
-        startTimer();
+        idle_timer->startRepeating(IdleTimerInterval);
     }
+
+    tr_webseed(tr_webseed&&) = delete;
+    tr_webseed(tr_webseed const&) = delete;
+    tr_webseed& operator=(tr_webseed&&) = delete;
+    tr_webseed& operator=(tr_webseed const&) = delete;
 
     ~tr_webseed() override
     {
@@ -180,7 +188,7 @@ public:
         return tr_torrentFindFromId(session, torrent_id);
     }
 
-    [[nodiscard]] bool is_transferring_pieces(uint64_t now, tr_direction direction, unsigned int* setme_Bps) const override
+    [[nodiscard]] bool isTransferringPieces(uint64_t now, tr_direction direction, unsigned int* setme_Bps) const override
     {
         unsigned int Bps = 0;
         bool is_active = false;
@@ -188,7 +196,7 @@ public:
         if (direction == TR_DOWN)
         {
             is_active = !std::empty(tasks);
-            Bps = bandwidth.getPieceSpeedBytesPerSecond(now, direction);
+            Bps = bandwidth_.getPieceSpeedBytesPerSecond(now, direction);
         }
 
         if (setme_Bps != nullptr)
@@ -197,6 +205,26 @@ public:
         }
 
         return is_active;
+    }
+
+    [[nodiscard]] tr_bandwidth& bandwidth() noexcept override
+    {
+        return bandwidth_;
+    }
+
+    [[nodiscard]] size_t activeReqCount(tr_direction dir) const noexcept override
+    {
+        if (dir == TR_CLIENT_TO_PEER) // blocks we've requested
+        {
+            return std::accumulate(
+                std::begin(tasks),
+                std::end(tasks),
+                size_t{},
+                [](size_t sum, auto const* task) { return sum + (task->blocks.end - task->blocks.begin); });
+        }
+
+        // webseed will never request blocks from us
+        return {};
     }
 
     [[nodiscard]] std::string readable() const override
@@ -209,38 +237,72 @@ public:
         return base_url;
     }
 
+    [[nodiscard]] bool hasPiece(tr_piece_index_t /*piece*/) const noexcept override
+    {
+        return true;
+    }
+
     void gotPieceData(uint32_t n_bytes)
     {
-        bandwidth.notifyBandwidthConsumed(TR_DOWN, n_bytes, true, tr_time_msec());
-        publishClientGotPieceData(n_bytes);
+        bandwidth_.notifyBandwidthConsumed(TR_DOWN, n_bytes, true, tr_time_msec());
+        publish(tr_peer_event::GotPieceData(n_bytes));
         connection_limiter.gotData();
     }
 
     void publishRejection(tr_block_span_t block_span)
     {
-        auto e = tr_peer_event{};
-        e.eventType = TR_PEER_CLIENT_GOT_REJ;
-
+        auto const* const tor = getTorrent();
         for (auto block = block_span.begin; block < block_span.end; ++block)
         {
-            auto const loc = getTorrent()->blockLoc(block);
-            e.pieceIndex = loc.piece;
-            e.offset = loc.piece_offset;
-            publish(&e);
+            publish(tr_peer_event::GotRejected(tor->blockInfo(), block));
         }
     }
 
-    void publishGotBlock(tr_torrent const* tor, tr_block_index_t block)
+    void requestBlocks(tr_block_span_t const* block_spans, size_t n_spans) override
     {
-        TR_ASSERT(block < tor->blockCount());
+        auto* const tor = getTorrent();
+        if (tor == nullptr || !tor->isRunning || tor->isDone())
+        {
+            return;
+        }
 
-        auto const loc = tor->blockLoc(block);
-        auto e = tr_peer_event{};
-        e.eventType = TR_PEER_CLIENT_GOT_BLOCK;
-        e.pieceIndex = loc.piece;
-        e.offset = loc.piece_offset;
-        e.length = tor->blockSize(loc.block);
-        publish(&e);
+        for (auto const *span = block_spans, *end = span + n_spans; span != end; ++span)
+        {
+            auto* const task = new tr_webseed_task{ tor, this, *span };
+            evbuffer_add_cb(task->content(), onBufferGotData, task);
+            tasks.insert(task);
+            task_request_next_chunk(task);
+
+            tr_peerMgrClientSentRequests(tor, this, *span);
+        }
+    }
+
+    [[nodiscard]] RequestLimit canRequest() const noexcept override
+    {
+        auto const n_slots = connection_limiter.slotsAvailable();
+        if (n_slots == 0)
+        {
+            return {};
+        }
+
+        if (auto* const tor = getTorrent(); tor == nullptr || !tor->isRunning || tor->isDone())
+        {
+            return {};
+        }
+
+        // Prefer to request large, contiguous chunks from webseeds.
+        // The actual value of '64' is arbitrary here;
+        // we could probably be smarter about this.
+        auto constexpr PreferredBlocksPerTask = size_t{ 64 };
+        return { n_slots, n_slots * PreferredBlocksPerTask };
+    }
+
+    void publish(tr_peer_event const& peer_event)
+    {
+        if (callback != nullptr)
+        {
+            (*callback)(this, peer_event, callback_data);
+        }
     }
 
     tr_torrent_id_t const torrent_id;
@@ -248,41 +310,13 @@ public:
     tr_peer_callback const callback;
     void* const callback_data;
 
-    Bandwidth bandwidth;
     ConnectionLimiter connection_limiter;
     std::set<tr_webseed_task*> tasks;
 
 private:
-    void publish(tr_peer_event* event)
-    {
-        if (callback != nullptr)
-        {
-            (*callback)(this, event, callback_data);
-        }
-    }
-
-    void publishClientGotPieceData(uint32_t length)
-    {
-        auto e = tr_peer_event{};
-        e.eventType = TR_PEER_CLIENT_GOT_PIECE_DATA;
-        e.length = length;
-        publish(&e);
-    }
-
-    void startTimer()
-    {
-        tr_timerAddMsec(*pulse_timer, IdleTimerMsec);
-    }
-
-    static void onTimer(evutil_socket_t /*fd*/, short /*what*/, void* vwebseed)
-    {
-        auto* const webseed = static_cast<tr_webseed*>(vwebseed);
-        on_idle(webseed);
-        webseed->startTimer();
-    }
-
-    std::shared_ptr<event> const pulse_timer;
-    static int constexpr IdleTimerMsec = 2000;
+    tr_bandwidth bandwidth_;
+    std::unique_ptr<libtransmission::Timer> idle_timer;
+    static auto constexpr IdleTimerInterval = 2s;
 };
 
 /***
@@ -292,7 +326,7 @@ private:
 struct write_block_data
 {
 private:
-    std::shared_ptr<evbuffer> const content_{ evbuffer_new(), evbuffer_free };
+    tr_evbuffer_ptr const content_{ evbuffer_new() };
 
 public:
     write_block_data(
@@ -314,7 +348,7 @@ public:
         if (auto* const tor = tr_torrentFindFromId(session_, tor_id_); tor != nullptr)
         {
             session_->cache->writeBlock(tor_id_, block_, data_);
-            webseed_->publishGotBlock(tor, block_);
+            webseed_->publish(tr_peer_event::GotBlock(tor->blockInfo(), block_));
         }
 
         delete this;
@@ -386,18 +420,10 @@ void onBufferGotData(evbuffer* /*buf*/, evbuffer_cb_info const* info, void* vtas
     task->webseed->gotPieceData(n_added);
 }
 
-void task_request_next_chunk(tr_webseed_task* task);
-
-void on_idle(tr_webseed* w)
+void on_idle(tr_webseed* webseed)
 {
-    auto* const tor = w->getTorrent();
-    if (tor == nullptr || !tor->isRunning || tor->isDone())
-    {
-        return;
-    }
-
-    auto const slots_available = w->connection_limiter.slotsAvailable();
-    if (slots_available == 0)
+    auto const [max_spans, max_blocks] = webseed->canRequest();
+    if (max_spans == 0 || max_blocks == 0)
     {
         return;
     }
@@ -405,18 +431,12 @@ void on_idle(tr_webseed* w)
     // Prefer to request large, contiguous chunks from webseeds.
     // The actual value of '64' is arbitrary here; we could probably
     // be smarter about this.
-    auto constexpr PreferredBlocksPerTask = size_t{ 64 };
-    auto const spans = tr_peerMgrGetNextRequests(tor, w, slots_available * PreferredBlocksPerTask);
-    for (size_t i = 0; i < slots_available && i < std::size(spans); ++i)
+    auto spans = tr_peerMgrGetNextRequests(webseed->getTorrent(), webseed, max_blocks);
+    if (std::size(spans) > max_spans)
     {
-        auto const& span = spans[i];
-        auto* const task = new tr_webseed_task{ tor, w, span };
-        evbuffer_add_cb(task->content(), onBufferGotData, task);
-        w->tasks.insert(task);
-        task_request_next_chunk(task);
-
-        tr_peerMgrClientSentRequests(tor, w, span);
+        spans.resize(max_spans);
     }
+    webseed->requestBlocks(std::data(spans), std::size(spans));
 }
 
 void onPartialDataFetched(tr_web::FetchResponse const& web_response)
@@ -470,13 +490,13 @@ void onPartialDataFetched(tr_web::FetchResponse const& web_response)
 template<typename OutputIt>
 void makeUrl(tr_webseed* w, std::string_view name, OutputIt out)
 {
-    auto const url = w->base_url;
+    auto const& url = w->base_url;
 
     out = std::copy(std::begin(url), std::end(url), out);
 
     if (tr_strvEndsWith(url, "/"sv) && !std::empty(name))
     {
-        tr_http_escape(out, name, false);
+        tr_urlPercentEncode(out, name, false);
     }
 }
 
@@ -528,6 +548,6 @@ tr_webseed_view tr_webseedView(tr_peer const* peer)
     }
 
     auto bytes_per_second = unsigned{ 0 };
-    auto const is_downloading = peer->is_transferring_pieces(tr_time_msec(), TR_DOWN, &bytes_per_second);
+    auto const is_downloading = peer->isTransferringPieces(tr_time_msec(), TR_DOWN, &bytes_per_second);
     return { w->base_url.c_str(), is_downloading, bytes_per_second };
 }

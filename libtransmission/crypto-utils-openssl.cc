@@ -8,9 +8,9 @@
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
 
-#include <openssl/bn.h>
+#include <memory>
+
 #include <openssl/crypto.h>
-#include <openssl/dh.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/opensslv.h>
@@ -21,13 +21,11 @@
 #include <fmt/core.h>
 
 #include "transmission.h"
+
 #include "crypto-utils.h"
 #include "log.h"
 #include "tr-assert.h"
 #include "utils.h"
-
-#define TR_CRYPTO_DH_SECRET_FALLBACK
-#include "crypto-utils-fallback.cc" // NOLINT(bugprone-suspicious-include)
 
 /***
 ****
@@ -39,8 +37,6 @@ static void log_openssl_error(char const* file, int line)
 
     if (tr_logLevelIsActive(TR_LOG_ERROR))
     {
-        char buf[512];
-
 #ifndef TR_LIGHTWEIGHT
 
         static bool strings_loaded = false;
@@ -58,7 +54,8 @@ static void log_openssl_error(char const* file, int line)
 
 #endif
 
-        ERR_error_string_n(error_code, buf, sizeof(buf));
+        auto buf = std::array<char, 512>{};
+        ERR_error_string_n(error_code, std::data(buf), std::size(buf));
         tr_logAddMessage(
             file,
             line,
@@ -66,7 +63,7 @@ static void log_openssl_error(char const* file, int line)
             fmt::format(
                 _("{crypto_library} error: {error} ({error_code})"),
                 fmt::arg("crypto_library", "OpenSSL"),
-                fmt::arg("error", buf),
+                fmt::arg("error", std::data(buf)),
                 fmt::arg("error_code", error_code)));
     }
 }
@@ -88,66 +85,133 @@ static bool check_openssl_result(int result, int expected_result, bool expected_
 #define check_result(result) check_openssl_result((result), 1, true, __FILE__, __LINE__)
 #define check_result_neq(result, x_result) check_openssl_result((result), (x_result), false, __FILE__, __LINE__)
 
-static bool check_openssl_pointer(void const* pointer, char const* file, int line)
-{
-    bool const ret = pointer != nullptr;
-
-    if (!ret)
-    {
-        log_openssl_error(file, line);
-    }
-
-    return ret;
-}
-
-#define check_pointer(pointer) check_openssl_pointer((pointer), __FILE__, __LINE__)
-
 /***
 ****
 ***/
 
-tr_sha1_ctx_t tr_sha1_init()
+namespace
 {
-    EVP_MD_CTX* handle = EVP_MD_CTX_create();
 
-    if (check_result(EVP_DigestInit_ex(handle, EVP_sha1(), nullptr)))
+class ShaHelper
+{
+public:
+    using EvpFunc = decltype((EVP_sha1));
+
+    explicit ShaHelper(EvpFunc evp_func)
+        : evp_func_{ evp_func }
     {
-        return handle;
+        clear();
     }
 
-    EVP_MD_CTX_destroy(handle);
-    return nullptr;
-}
-
-bool tr_sha1_update(tr_sha1_ctx_t raw_handle, void const* data, size_t data_length)
-{
-    auto* const handle = static_cast<EVP_MD_CTX*>(raw_handle);
-
-    TR_ASSERT(handle != nullptr);
-
-    if (data_length == 0)
+    void clear() const
     {
-        return true;
+        EVP_DigestInit_ex(handle_.get(), evp_func_(), nullptr);
     }
 
-    TR_ASSERT(data != nullptr);
+    void update(void const* data, size_t data_length) const
+    {
+        if (data_length != 0U)
+        {
+            EVP_DigestUpdate(handle_.get(), data, data_length);
+        }
+    }
 
-    return check_result(EVP_DigestUpdate(handle, data, data_length));
+    template<typename DigestType>
+    [[nodiscard]] DigestType digest()
+    {
+        TR_ASSERT(handle_ != nullptr);
+
+        unsigned int hash_length = 0;
+        auto digest = DigestType{};
+        auto* const digest_as_uchar = reinterpret_cast<unsigned char*>(std::data(digest));
+        [[maybe_unused]] bool const ok = check_result(EVP_DigestFinal_ex(handle_.get(), digest_as_uchar, &hash_length));
+        TR_ASSERT(!ok || hash_length == std::size(digest));
+
+        clear();
+        return digest;
+    }
+
+private:
+    struct MessageDigestDeleter
+    {
+        void operator()(EVP_MD_CTX* ctx) const noexcept
+        {
+            EVP_MD_CTX_destroy(ctx);
+        }
+    };
+
+    EvpFunc evp_func_;
+    std::unique_ptr<EVP_MD_CTX, MessageDigestDeleter> const handle_{ EVP_MD_CTX_create() };
+};
+
+class Sha1Impl final : public tr_sha1
+{
+public:
+    Sha1Impl() = default;
+    Sha1Impl(Sha1Impl&&) = delete;
+    Sha1Impl(Sha1Impl const&) = delete;
+    ~Sha1Impl() override = default;
+    Sha1Impl& operator=(Sha1Impl&&) = delete;
+    Sha1Impl& operator=(Sha1Impl const&) = delete;
+
+    void clear() override
+    {
+        helper_.clear();
+    }
+
+    void add(void const* data, size_t data_length) override
+    {
+        helper_.update(data, data_length);
+    }
+
+    [[nodiscard]] tr_sha1_digest_t finish() override
+    {
+        return helper_.digest<tr_sha1_digest_t>();
+    }
+
+private:
+    ShaHelper helper_{ EVP_sha1 };
+};
+
+class Sha256Impl final : public tr_sha256
+{
+public:
+    Sha256Impl() = default;
+    Sha256Impl(Sha256Impl&&) = delete;
+    Sha256Impl(Sha256Impl const&) = delete;
+    ~Sha256Impl() override = default;
+    Sha256Impl& operator=(Sha256Impl&&) = delete;
+    Sha256Impl& operator=(Sha256Impl const&) = delete;
+
+    void clear() override
+    {
+        helper_.clear();
+    }
+
+    void add(void const* data, size_t data_length) override
+    {
+        helper_.update(data, data_length);
+    }
+
+    [[nodiscard]] tr_sha256_digest_t finish() override
+    {
+        return helper_.digest<tr_sha256_digest_t>();
+    }
+
+private:
+    ShaHelper helper_{ EVP_sha256 };
+};
+
+} // namespace
+
+std::unique_ptr<tr_sha1> tr_sha1::create()
+{
+    return std::make_unique<Sha1Impl>();
 }
 
-std::optional<tr_sha1_digest_t> tr_sha1_final(tr_sha1_ctx_t raw_handle)
+std::unique_ptr<tr_sha256> tr_sha256::create()
 {
-    auto* handle = static_cast<EVP_MD_CTX*>(raw_handle);
-    TR_ASSERT(handle != nullptr);
-
-    unsigned int hash_length = 0;
-    auto digest = tr_sha1_digest_t{};
-    auto* const digest_as_uchar = reinterpret_cast<unsigned char*>(std::data(digest));
-    bool const ok = check_result(EVP_DigestFinal_ex(handle, digest_as_uchar, &hash_length));
-    TR_ASSERT(!ok || hash_length == std::size(digest));
-
-    EVP_MD_CTX_destroy(handle);
-    return ok ? std::make_optional(digest) : std::nullopt;
+    return std::make_unique<Sha256Impl>();
 }
 
 /***
@@ -156,9 +220,9 @@ std::optional<tr_sha1_digest_t> tr_sha1_final(tr_sha1_ctx_t raw_handle)
 
 #if OPENSSL_VERSION_NUMBER < 0x0090802fL
 
-static EVP_CIPHER_CTX* openssl_evp_cipher_context_new(void)
+static EVP_CIPHER_CTX* openssl_evp_cipher_context_new()
 {
-    EVP_CIPHER_CTX* handle = tr_new(EVP_CIPHER_CTX, 1);
+    auto* const handle = new EVP_CIPHER_CTX{};
 
     if (handle != nullptr)
     {
@@ -176,174 +240,13 @@ static void openssl_evp_cipher_context_free(EVP_CIPHER_CTX* handle)
     }
 
     EVP_CIPHER_CTX_cleanup(handle);
-    tr_free(handle);
+    delete handle;
 }
 
 #define EVP_CIPHER_CTX_new() openssl_evp_cipher_context_new()
 #define EVP_CIPHER_CTX_free(x) openssl_evp_cipher_context_free((x))
 
 #endif
-
-/***
-****
-***/
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000 || (defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x20700000)
-
-static inline int DH_set0_pqg(DH* dh, BIGNUM* p, BIGNUM* q, BIGNUM* g)
-{
-    /* If the fields p and g in d are nullptr, the corresponding input
-     * parameters MUST be non-nullptr. q may remain nullptr.
-     */
-    if ((dh->p == nullptr && p == nullptr) || (dh->g == nullptr && g == nullptr))
-    {
-        return 0;
-    }
-
-    if (p != nullptr)
-    {
-        BN_free(dh->p);
-        dh->p = p;
-    }
-
-    if (q != nullptr)
-    {
-        BN_free(dh->q);
-        dh->q = q;
-    }
-
-    if (g != nullptr)
-    {
-        BN_free(dh->g);
-        dh->g = g;
-    }
-
-    if (q != nullptr)
-    {
-        dh->length = BN_num_bits(q);
-    }
-
-    return 1;
-}
-
-static constexpr int DH_set_length(DH* dh, long length)
-{
-    dh->length = length;
-    return 1;
-}
-
-static constexpr void DH_get0_key(DH const* dh, BIGNUM const** pub_key, BIGNUM const** priv_key)
-{
-    if (pub_key != nullptr)
-    {
-        *pub_key = dh->pub_key;
-    }
-
-    if (priv_key != nullptr)
-    {
-        *priv_key = dh->priv_key;
-    }
-}
-
-#endif
-
-tr_dh_ctx_t tr_dh_new(
-    uint8_t const* prime_num,
-    size_t prime_num_length,
-    uint8_t const* generator_num,
-    size_t generator_num_length)
-{
-    TR_ASSERT(prime_num != nullptr);
-    TR_ASSERT(generator_num != nullptr);
-
-    DH* handle = DH_new();
-
-    BIGNUM* const p = BN_bin2bn(prime_num, prime_num_length, nullptr);
-    BIGNUM* const g = BN_bin2bn(generator_num, generator_num_length, nullptr);
-
-    if (!check_pointer(p) || !check_pointer(g) || DH_set0_pqg(handle, p, nullptr, g) == 0)
-    {
-        BN_free(p);
-        BN_free(g);
-        DH_free(handle);
-        handle = nullptr;
-    }
-
-    return handle;
-}
-
-void tr_dh_free(tr_dh_ctx_t raw_handle)
-{
-    auto* handle = static_cast<DH*>(raw_handle);
-
-    if (handle == nullptr)
-    {
-        return;
-    }
-
-    DH_free(handle);
-}
-
-bool tr_dh_make_key(tr_dh_ctx_t raw_handle, size_t private_key_length, uint8_t* public_key, size_t* public_key_length)
-{
-    TR_ASSERT(raw_handle != nullptr);
-    TR_ASSERT(public_key != nullptr);
-
-    auto* handle = static_cast<DH*>(raw_handle);
-
-    DH_set_length(handle, private_key_length * 8);
-
-    if (!check_result(DH_generate_key(handle)))
-    {
-        return false;
-    }
-
-    BIGNUM const* my_public_key = nullptr;
-    DH_get0_key(handle, &my_public_key, nullptr);
-
-    int const my_public_key_length = BN_bn2bin(my_public_key, public_key);
-    int const dh_size = DH_size(handle);
-
-    tr_dh_align_key(public_key, my_public_key_length, dh_size);
-
-    if (public_key_length != nullptr)
-    {
-        *public_key_length = dh_size;
-    }
-
-    return true;
-}
-
-tr_dh_secret_t tr_dh_agree(tr_dh_ctx_t raw_handle, uint8_t const* other_public_key, size_t other_public_key_length)
-{
-    auto* handle = static_cast<DH*>(raw_handle);
-
-    TR_ASSERT(handle != nullptr);
-    TR_ASSERT(other_public_key != nullptr);
-
-    BIGNUM* const other_key = BN_bin2bn(other_public_key, other_public_key_length, nullptr);
-    if (!check_pointer(other_key))
-    {
-        return nullptr;
-    }
-
-    int const dh_size = DH_size(handle);
-    tr_dh_secret* ret = tr_dh_secret_new(dh_size);
-    int const secret_key_length = DH_compute_key(ret->key, other_key, handle);
-
-    if (check_result_neq(secret_key_length, -1))
-    {
-        tr_dh_secret_align(ret, secret_key_length);
-    }
-    else
-    {
-        tr_dh_secret_free(ret);
-        ret = nullptr;
-    }
-
-    BN_free(other_key);
-    return ret;
-}
 
 /***
 ****

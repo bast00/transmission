@@ -1,11 +1,12 @@
 // This file Copyright (C) 2013-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <cstring>
+
 #include "transmission.h"
 #include "peer-msgs.h"
-#include "utils.h"
 
 #include "gtest/gtest.h"
 
@@ -14,7 +15,6 @@ TEST(PeerMsgs, placeholder)
 #if 0
 
     auto infohash = tr_sha1_digest_t{};
-    struct tr_address addr;
     tr_piece_index_t pieceCount = 1313;
     size_t numwant;
     size_t numgot;
@@ -23,7 +23,7 @@ TEST(PeerMsgs, placeholder)
 
     memset(std::data(infohash), 0xaa, std::size(infohash));
 
-    tr_address_from_string(&addr, "80.4.4.200");
+    auto const addr = tr_address::fromString("80.4.4.200");
 
     numwant = 7;
     numgot = tr_generateAllowedSet(buf, numwant, pieceCount, infohash, &addr);

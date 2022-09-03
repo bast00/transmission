@@ -5,8 +5,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <iterator> // for std::back_inserter
+#include <set>
 #include <string_view>
-#include <utility>
 
 #include <libtransmission/transmission.h>
 #include <libtransmission/variant.h>

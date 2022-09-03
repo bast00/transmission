@@ -47,7 +47,7 @@
 <context>
     <name>Application</name>
     <message>
-        <location filename="../Application.cc" line="+330"/>
+        <location filename="../Application.cc" line="+332"/>
         <source>&lt;b&gt;Transmission is a file sharing program.&lt;/b&gt;</source>
         <translation>&lt;b&gt;Transmission, dosya paylaşım programıdır.&lt;/b&gt;</translation>
     </message>
@@ -614,7 +614,7 @@
     <message>
         <location line="+1"/>
         <source>Only Check Selected</source>
-        <translation>Sadece Seçileni Denetle</translation>
+        <translation>Yalnızca Seçileni Denetle</translation>
     </message>
     <message>
         <location line="+4"/>
@@ -1433,7 +1433,7 @@
         <translation>Yeni Torrent</translation>
     </message>
     <message>
-        <location filename="../MakeDialog.cc" line="+230"/>
+        <location filename="../MakeDialog.cc" line="+231"/>
         <source>&lt;i&gt;No source selected&lt;/i&gt;</source>
         <translation>&lt;i&gt;Hiçbir kaynak seçilmedi&lt;/i&gt; </translation>
     </message>
@@ -1517,7 +1517,7 @@ Başka ana URL eklemek için, onu boş bir satırdan sonra ekleyin.</translation
         <translation>Yeni Torrent</translation>
     </message>
     <message>
-        <location filename="../MakeDialog.cc" line="-136"/>
+        <location filename="../MakeDialog.cc" line="-137"/>
         <source>Creating &quot;%1&quot;</source>
         <translation>&quot;%1&quot; oluşturuluyor</translation>
     </message>
@@ -2011,17 +2011,17 @@ Başka ana URL eklemek için, onu boş bir satırdan sonra ekleyin.</translation
     <message>
         <location line="+148"/>
         <source>Call scrip&amp;t when downloading is completed:</source>
-        <translation>İndirme tamamlandığında &amp;betik dosyasını çağırın:</translation>
+        <translation>İndirme tamamlandığında &amp;betik dosyasını çağır:</translation>
     </message>
     <message>
         <location line="+105"/>
         <source>Call scrip&amp;t when seeding is completed:</source>
-        <translation>Gönderim tamamlandığında &amp;betik dosyasını çağırın:</translation>
+        <translation>Gönderim tamamlandığında &amp;betik dosyasını çağır:</translation>
     </message>
     <message>
         <location line="+406"/>
         <source>Default Public Trackers</source>
-        <translation>Varsayılan Genel İzleyiciler</translation>
+        <translation>Öntanımlı Genel İzleyiciler</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -2178,12 +2178,12 @@ Başka ana URL eklemek için, onu boş bir satırdan sonra ekleyin.</translation
 <context>
     <name>QObject</name>
     <message>
-        <location filename="../Application.cc" line="-277"/>
+        <location filename="../Application.cc" line="-279"/>
         <source>Invalid option</source>
         <translation>Geçersiz seçenek</translation>
     </message>
     <message>
-        <location line="+305"/>
+        <location line="+307"/>
         <source>Start Now</source>
         <translation>Şimdi Başlat</translation>
     </message>
@@ -2288,7 +2288,7 @@ Başka ana URL eklemek için, onu boş bir satırdan sonra ekleyin.</translation
     <message>
         <location line="+13"/>
         <source>&amp;Port:</source>
-        <translation>&amp;Port:</translation>
+        <translation>&amp;Bağlantı Noktası:</translation>
     </message>
     <message>
         <location line="+20"/>
@@ -2316,7 +2316,7 @@ Başka ana URL eklemek için, onu boş bir satırdan sonra ekleyin.</translation
     <message>
         <location line="+12"/>
         <source>Current Session</source>
-        <translation>Mevcut Oturum</translation>
+        <translation>Geçerli Oturum</translation>
     </message>
     <message>
         <location line="+12"/>
@@ -2639,7 +2639,7 @@ Başka ana URL eklemek için, onu boş bir satırdan sonra ekleyin.</translation
     <message>
         <location line="+7"/>
         <source>Also see Default Public Trackers in Edit &gt; Preferences &gt; Network</source>
-        <translation>Ayrıca bkz. Varsayılan Genel İzleyiciler Düzenle &gt; Tercihler &gt; Ağ</translation>
+        <translation>Düzenle &gt; Tercihler &gt; Ağ içindeki Öntanımlı Genel İzleyiciler&apos;e de bakınız</translation>
     </message>
 </context>
 </TS>

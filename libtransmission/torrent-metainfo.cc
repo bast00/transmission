@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
-#include <numeric>
+#include <cerrno> // for EINVAL
 #include <string>
 #include <string_view>
 #include <vector>
@@ -30,108 +30,6 @@
 #include "web-utils.h"
 
 using namespace std::literals;
-
-//// C BINDINGS
-
-#if 0
-/// Lifecycle
-
-tr_torrent_metainfo* tr_torrentMetainfoNewFromData(char const* data, size_t data_len, struct tr_error** error)
-{
-    auto* tm = new tr_torrent_metainfo{};
-    if (!tm->parseBenc(std::string_view{ data, data_len }, error))
-    {
-        delete tm;
-        return nullptr;
-    }
-
-    return tm;
-}
-
-tr_torrent_metainfo* tr_torrentMetainfoNewFromFile(char const* filename, struct tr_error** error)
-{
-    auto* tm = new tr_torrent_metainfo{};
-    if (!tm->parseBencFromFile(filename ? filename : "", nullptr, error))
-    {
-        delete tm;
-        return nullptr;
-    }
-
-    return tm;
-}
-
-void tr_torrentMetainfoFree(tr_torrent_metainfo* tm)
-{
-    delete tm;
-}
-
-////  Accessors
-
-char* tr_torrentMetainfoMagnet(struct tr_torrent_metainfo const* tm)
-{
-    return tr_strvDup(tm->magnet());
-}
-
-/// Info
-
-tr_torrent_metainfo_info* tr_torrentMetainfoGet(tr_torrent_metainfo const* tm, tr_torrent_metainfo_info* setme)
-{
-    setme->comment = tm->comment.c_str();
-    setme->creator = tm->creator.c_str();
-    setme->info_hash = tm->info_hash;
-    setme->info_hash_string = std::data(tm->info_hash_chars);
-    setme->is_private = tm->is_private;
-    setme->n_pieces = tm->n_pieces;
-    setme->name = tm->name.c_str();
-    setme->source = tm->source.c_str();
-    setme->time_created = tm->time_created;
-    setme->total_size = tm->total_size;
-    return setme;
-}
-
-/// Files
-
-size_t tr_torrentMetainfoFileCount(tr_torrent_metainfo const* tm)
-{
-    return std::size(tm->files);
-}
-
-tr_torrent_metainfo_file_info* tr_torrentMetainfoFile(
-    tr_torrent_metainfo const* tm,
-    size_t n,
-    tr_torrent_metainfo_file_info* setme)
-{
-    auto& file = tm->files[n];
-    setme->path = file.path.c_str();
-    setme->size = file.size;
-    return setme;
-}
-
-/// Trackers
-
-size_t tr_torrentMetainfoTrackerCount(tr_torrent_metainfo const* tm)
-{
-    return std::size(tm->trackers);
-}
-
-tr_torrent_metainfo_tracker_info* tr_torrentMetainfoTracker(
-    tr_torrent_metainfo const* tm,
-    size_t n,
-    tr_torrent_metainfo_tracker_info* setme)
-{
-    auto it = std::begin(tm->trackers);
-    std::advance(it, n);
-    auto const& tracker = it->second;
-    setme->announce_url = tr_quark_get_string(tracker.announce_url);
-    setme->scrape_url = tr_quark_get_string(tracker.scrape_url);
-    setme->tier = tracker.tier;
-    return setme;
-}
-#endif
-
-/***
-****
-***/
 
 /**
  * @brief Ensure that the URLs for multfile torrents end in a slash.
@@ -242,21 +140,9 @@ struct MetainfoHandler final : public transmission::benc::BasicHandler<MaxBencDe
 
         if (state_ == State::FileTree) // bittorrent v2 format
         {
-            if (!addFile(context))
-            {
-                return false;
-            }
-
-            file_subpath_.popdir();
-            if (file_subpath_ == "."sv)
-            {
-                file_subpath_.clear();
-            }
-
-            if (pathIs(InfoKey, FileTreeKey))
-            {
-                state_ = State::UsePath;
-            }
+            // v2, ignore for today
+            tr_logAddInfo("'file tree' is ignored");
+            state_ = State::UsePath;
         }
         else if (state_ == State::Files) // bittorrent v1 format
         {
@@ -266,6 +152,10 @@ struct MetainfoHandler final : public transmission::benc::BasicHandler<MaxBencDe
             }
 
             file_subpath_.clear();
+        }
+        else if (state_ == State::PieceLayers)
+        {
+            state_ = State::UsePath;
         }
 
         return depth() > 0;
@@ -344,6 +234,7 @@ struct MetainfoHandler final : public transmission::benc::BasicHandler<MaxBencDe
         {
             // currently unused. TODO support for bittorrent v2
             // TODO https://github.com/transmission/transmission/issues/458
+            tm_.is_v2_ = value == 2;
         }
         else if (
             pathIs(DurationKey) || //
@@ -431,11 +322,11 @@ struct MetainfoHandler final : public transmission::benc::BasicHandler<MaxBencDe
         }
         else if (pathIs(CommentKey) || pathIs(CommentUtf8Key))
         {
-            tr_strvUtf8Clean(value, tm_.comment_);
+            tm_.comment_ = tr_strvUtf8Clean(value);
         }
         else if (pathIs(CreatedByKey) || pathIs(CreatedByUtf8Key))
         {
-            tr_strvUtf8Clean(value, tm_.creator_);
+            tm_.creator_ = tr_strvUtf8Clean(value);
         }
         else if (pathIs(SourceKey) || pathIs(InfoKey, SourceKey) || pathIs(PublisherKey) || pathIs(InfoKey, PublisherKey))
         {
@@ -443,7 +334,7 @@ struct MetainfoHandler final : public transmission::benc::BasicHandler<MaxBencDe
             // to have the same use as the 'source' key
             // http://wiki.bitcomet.com/inside_bitcomet
 
-            tr_strvUtf8Clean(value, tm_.source_);
+            tm_.source_ = tr_strvUtf8Clean(value);
         }
         else if (pathIs(AnnounceKey))
         {
@@ -459,14 +350,22 @@ struct MetainfoHandler final : public transmission::benc::BasicHandler<MaxBencDe
         }
         else if (pathIs(InfoKey, NameKey) || pathIs(InfoKey, NameUtf8Key))
         {
-            tr_strvUtf8Clean(value, tm_.name_);
+            tm_.name_ = tr_strvUtf8Clean(value);
         }
         else if (pathIs(InfoKey, PiecesKey))
         {
-            auto const n = std::size(value) / sizeof(tr_sha1_digest_t);
-            tm_.pieces_.resize(n);
-            std::copy_n(std::data(value), std::size(value), reinterpret_cast<char*>(std::data(tm_.pieces_)));
-            tm_.pieces_offset_ = context.tokenSpan().first;
+            if (std::size(value) % sizeof(tr_sha1_digest_t) == 0)
+            {
+                auto const n = std::size(value) / sizeof(tr_sha1_digest_t);
+                tm_.pieces_.resize(n);
+                std::copy_n(std::data(value), std::size(value), reinterpret_cast<char*>(std::data(tm_.pieces_)));
+                tm_.pieces_offset_ = context.tokenSpan().first;
+            }
+            else
+            {
+                tr_error_set(context.error, EINVAL, fmt::format("invalid piece size: {}", std::size(value)));
+                unhandled = true;
+            }
         }
         else if (pathStartsWith(PieceLayersKey))
         {
@@ -581,15 +480,13 @@ private:
         char const* const begin = &info_dict_begin_.front();
         char const* const end = &context.raw().back() + 1;
         auto const info_dict_benc = std::string_view{ begin, size_t(end - begin) };
-        auto const hash = tr_sha1(info_dict_benc);
-        if (!hash)
-        {
-            tr_error_set(context.error, EINVAL, "bad info_dict checksum");
-            return false;
-        }
+        auto const hash = tr_sha1::digest(info_dict_benc);
+        auto const hash2 = tr_sha256::digest(info_dict_benc);
 
-        tm_.info_hash_ = *hash;
+        tm_.info_hash_ = hash;
         tm_.info_hash_str_ = tr_sha1_to_string(tm_.info_hash_);
+        tm_.info_hash2_ = hash2;
+        tm_.info_hash2_str_ = tr_sha256_to_string(tm_.info_hash2_);
         tm_.info_dict_size_ = std::size(info_dict_benc);
         return true;
     }

@@ -1,10 +1,9 @@
 // This file Copyright (C) 2013-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
 #include <array>
-#include <cstring>
 #include <string_view>
 
 #include "transmission.h"
@@ -30,13 +29,13 @@ using TorrentMetainfoTest = SessionTest;
 TEST_F(TorrentMetainfoTest, magnetLink)
 {
     // background info @ http://wiki.theory.org/BitTorrent_Magnet-URI_Webseeding
-    char const constexpr* const MagnetLink =
+    auto constexpr MagnetLink =
         "magnet:?"
         "xt=urn:btih:14ffe5dd23188fd5cb53a1d47f1289db70abf31e"
         "&dn=ubuntu_12_04_1_desktop_32_bit"
         "&tr=http%3A%2F%2Ftracker.publicbt.com%2Fannounce"
         "&tr=udp%3A%2F%2Ftracker.publicbt.com%3A80"
-        "&ws=http%3A%2F%2Ftransmissionbt.com";
+        "&ws=http%3A%2F%2Ftransmissionbt.com"sv;
 
     auto metainfo = tr_torrent_metainfo{};
     EXPECT_TRUE(metainfo.parseMagnet(MagnetLink));
@@ -227,7 +226,7 @@ TEST_F(TorrentMetainfoTest, HoffmanStyleWebseeds)
     auto const src_filename = tr_pathbuf{ LIBTRANSMISSION_TEST_ASSETS_DIR, "/debian-11.2.0-amd64-DVD-1.iso.torrent"sv };
     auto tm = tr_torrent_metainfo{};
     EXPECT_TRUE(tm.parseTorrentFile(src_filename));
-    EXPECT_EQ(2, tm.webseedCount());
+    EXPECT_EQ(size_t{ 2 }, tm.webseedCount());
     EXPECT_EQ(
         "https://cdimage.debian.org/cdimage/release/11.2.0//srv/cdbuilder.debian.org/dst/deb-cd/weekly-builds/amd64/iso-dvd/debian-11.2.0-amd64-DVD-1.iso"sv,
         tm.webseed(0));
@@ -241,7 +240,7 @@ TEST_F(TorrentMetainfoTest, GetRightStyleWebseedList)
     auto const src_filename = tr_pathbuf{ LIBTRANSMISSION_TEST_ASSETS_DIR, "/webseed-getright-list.torrent"sv };
     auto tm = tr_torrent_metainfo{};
     EXPECT_TRUE(tm.parseTorrentFile(src_filename));
-    EXPECT_EQ(2, tm.webseedCount());
+    EXPECT_EQ(size_t{ 2 }, tm.webseedCount());
     EXPECT_EQ("http://www.webseed-one.com/"sv, tm.webseed(0));
     EXPECT_EQ("http://webseed-two.com/"sv, tm.webseed(1));
 }
@@ -251,8 +250,15 @@ TEST_F(TorrentMetainfoTest, GetRightStyleWebseedString)
     auto const src_filename = tr_pathbuf{ LIBTRANSMISSION_TEST_ASSETS_DIR, "/webseed-getright-string.torrent"sv };
     auto tm = tr_torrent_metainfo{};
     EXPECT_TRUE(tm.parseTorrentFile(src_filename));
-    EXPECT_EQ(1, tm.webseedCount());
+    EXPECT_EQ(size_t{ 1 }, tm.webseedCount());
     EXPECT_EQ("http://www.webseed-one.com/"sv, tm.webseed(0));
+}
+
+// Test for https://github.com/transmission/transmission/issues/3591
+TEST_F(TorrentMetainfoTest, parseBencOOBWrite)
+{
+    auto tm = tr_torrent_metainfo{};
+    EXPECT_FALSE(tm.parseBenc(tr_base64_decode("ZGg0OmluZm9kNjpwaWVjZXMzOkFpzQ==")));
 }
 
 } // namespace test

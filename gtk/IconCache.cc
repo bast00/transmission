@@ -5,11 +5,13 @@
  *
  */
 
+#include <algorithm>
 #include <array>
 #include <map>
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include <glibmm.h>
 #include <giomm.h>

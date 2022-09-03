@@ -1,5 +1,5 @@
 // This file Copyright © 2021-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -11,6 +11,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 struct evbuffer;
 
@@ -118,8 +119,14 @@ public:
             return std::nullopt;
         }
 
-        // Return the preferred user public address string, or nullopt to not use one
-        [[nodiscard]] virtual std::optional<std::string> publicAddress() const
+        // Return IPv4 user public address string, or nullopt to not use one
+        [[nodiscard]] virtual std::optional<std::string> publicAddressV4() const
+        {
+            return std::nullopt;
+        }
+
+        // Return IPv6 user public address string, or nullopt to not use one
+        [[nodiscard]] virtual std::optional<std::string> publicAddressV6() const
         {
             return std::nullopt;
         }
@@ -135,7 +142,7 @@ public:
         {
         }
 
-        // Return the number of bytes that should be allowed. See Bandwidth::clamp()
+        // Return the number of bytes that should be allowed. See tr_bandwidth::clamp()
         [[nodiscard]] virtual unsigned int clamp([[maybe_unused]] int bandwidth_tag, unsigned int byte_count) const
         {
             return byte_count;

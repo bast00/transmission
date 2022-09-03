@@ -55,11 +55,11 @@ void AboutDialog::showCredits()
         this,
         tr("Credits"),
         QString::fromUtf8("Charles Kerr (Backend; Daemon; GTK+; Qt)\n"
-                          "Mitchell Livingston (OS X)\n"
+                          "Mitchell Livingston (macOS)\n"
                           "Mike Gelfand\n"));
 }
 
 void AboutDialog::showLicense()
 {
-    Utils::openDialog(license_dialog_, this);
+    Utils::openDialog(license_dialog_, this); // NOLINT clang-analyzer-cplusplus.NewDelete
 }

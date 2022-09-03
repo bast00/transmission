@@ -702,6 +702,9 @@
 /* Preferences -> Network -> port status */
 "Port is open" = "Port åben";
 
+/* No comment provided by engineer. */
+"PrefWindowSize" = "640";
+
 /* File Outline -> Menu
    file table -> header tool tip */
 "Priority" = "Prioritet";
@@ -1126,7 +1129,7 @@
 
 /* Message window -> level
    Message window -> level string */
-"Warn" = "";
+"Warning" = "";
 
 /* Drag overlay -> url */
 "Web Address" = "Webadresse";

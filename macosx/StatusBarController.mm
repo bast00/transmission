@@ -2,8 +2,6 @@
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
-#include <libtransmission/transmission.h>
-
 #import "StatusBarController.h"
 #import "NSStringAdditions.h"
 
@@ -31,8 +29,6 @@ typedef NS_ENUM(unsigned int, statusTag) {
 
 @property(nonatomic) CGFloat fPreviousDownloadRate;
 @property(nonatomic) CGFloat fPreviousUploadRate;
-
-- (void)resizeStatusButton;
 
 @end
 
@@ -70,9 +66,6 @@ typedef NS_ENUM(unsigned int, statusTag) {
     //update when speed limits are changed
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(updateSpeedFieldsToolTips) name:@"SpeedLimitUpdate"
                                              object:nil];
-    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(resizeStatusButton)
-                                               name:NSWindowDidResizeNotification
-                                             object:self.view.window];
 }
 
 - (void)dealloc
@@ -100,15 +93,7 @@ typedef NS_ENUM(unsigned int, statusTag) {
     BOOL total;
     if ((total = [statusLabel isEqualToString:STATUS_RATIO_TOTAL]) || [statusLabel isEqualToString:STATUS_RATIO_SESSION])
     {
-        tr_session_stats stats;
-        if (total)
-        {
-            tr_sessionGetCumulativeStats(self.fLib, &stats);
-        }
-        else
-        {
-            tr_sessionGetStats(self.fLib, &stats);
-        }
+        auto const stats = total ? tr_sessionGetCumulativeStats(self.fLib) : tr_sessionGetStats(self.fLib);
 
         statusString = [NSLocalizedString(@"Ratio", "status bar -> status label")
             stringByAppendingFormat:@": %@", [NSString stringForRatio:stats.ratio]];
@@ -117,15 +102,7 @@ typedef NS_ENUM(unsigned int, statusTag) {
     {
         total = [statusLabel isEqualToString:STATUS_TRANSFER_TOTAL];
 
-        tr_session_stats stats;
-        if (total)
-        {
-            tr_sessionGetCumulativeStats(self.fLib, &stats);
-        }
-        else
-        {
-            tr_sessionGetStats(self.fLib, &stats);
-        }
+        auto const stats = total ? tr_sessionGetCumulativeStats(self.fLib) : tr_sessionGetStats(self.fLib);
 
         statusString = [NSString stringWithFormat:@"%@: %@  %@: %@",
                                                   NSLocalizedString(@"DL", "status bar -> status label"),
@@ -137,7 +114,6 @@ typedef NS_ENUM(unsigned int, statusTag) {
     if (![self.fStatusButton.title isEqualToString:statusString])
     {
         self.fStatusButton.title = statusString;
-        [self resizeStatusButton];
     }
 }
 
@@ -245,25 +221,6 @@ typedef NS_ENUM(unsigned int, statusTag) {
     }
 
     return YES;
-}
-
-#pragma mark - Private
-
-- (void)resizeStatusButton
-{
-    [self.fStatusButton sizeToFit];
-
-    //width ends up being too long
-    NSRect statusFrame = self.fStatusButton.frame;
-    statusFrame.size.width -= 25.0;
-
-    CGFloat const difference = NSMaxX(statusFrame) + 5.0 - NSMinX(self.fTotalDLImageView.frame);
-    if (difference > 0.0)
-    {
-        statusFrame.size.width -= difference;
-    }
-
-    self.fStatusButton.frame = statusFrame;
 }
 
 @end

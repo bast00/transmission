@@ -3,6 +3,7 @@
 // License text can be found in the licenses/ folder.
 
 #include <array>
+#include <memory>
 #include <string>
 
 #include <glibmm/i18n.h>
@@ -219,10 +220,8 @@ void MainWindow::Impl::status_menu_toggled_cb(Gtk::CheckMenuItem* menu_item, std
 void MainWindow::Impl::syncAltSpeedButton()
 {
     bool const b = gtr_pref_flag_get(TR_KEY_alt_speed_enabled);
-    char const* const stock = b ? "alt-speed-on" : "alt-speed-off";
-
     alt_speed_button_->set_active(b);
-    alt_speed_image_->set_from_icon_name(stock, Gtk::BuiltinIconSize::ICON_SIZE_MENU);
+    alt_speed_image_->set_from_icon_name("turtle-symbolic", Gtk::BuiltinIconSize::ICON_SIZE_MENU);
     alt_speed_button_->set_halign(Gtk::ALIGN_CENTER);
     alt_speed_button_->set_valign(Gtk::ALIGN_CENTER);
     alt_speed_button_->set_tooltip_text(fmt::format(
@@ -481,7 +480,7 @@ MainWindow::Impl::Impl(MainWindow& window, Glib::RefPtr<Gio::ActionGroup> const&
 
     /* gear */
     auto* gear_button = Gtk::make_managed<Gtk::Button>();
-    gear_button->add(*Gtk::make_managed<Gtk::Image>("preferences-other", Gtk::ICON_SIZE_MENU));
+    gear_button->add(*Gtk::make_managed<Gtk::Image>("options-symbolic", Gtk::ICON_SIZE_MENU));
     gear_button->set_tooltip_text(_("Options"));
     gear_button->set_relief(Gtk::RELIEF_NONE);
     options_menu_ = createOptionsMenu();
@@ -521,7 +520,7 @@ MainWindow::Impl::Impl(MainWindow& window, Glib::RefPtr<Gio::ActionGroup> const&
     /* ratio selector */
     auto* ratio_button = Gtk::make_managed<Gtk::Button>();
     ratio_button->set_tooltip_text(_("Statistics"));
-    ratio_button->add(*Gtk::make_managed<Gtk::Image>("view-statistics", Gtk::ICON_SIZE_MENU));
+    ratio_button->add(*Gtk::make_managed<Gtk::Image>("ratio-symbolic", Gtk::ICON_SIZE_MENU));
     ratio_button->set_relief(Gtk::RELIEF_NONE);
     ratio_button->signal_clicked().connect([this, ratio_button]() { onYinYangClicked(ratio_button); });
     status_->add(*ratio_button);
@@ -576,23 +575,30 @@ MainWindow::Impl::Impl(MainWindow& window, Glib::RefPtr<Gio::ActionGroup> const&
         this);
 
     refresh();
+
+    /* prevent keyboard events being sent to the window first */
+    window.signal_key_press_event().connect(
+        [this](GdkEventKey* event) { return gtk_window_propagate_key_event(static_cast<Gtk::Window&>(window_).gobj(), event); },
+        false);
+    window.signal_key_release_event().connect(
+        [this](GdkEventKey* event) { return gtk_window_propagate_key_event(static_cast<Gtk::Window&>(window_).gobj(), event); },
+        false);
 }
 
 void MainWindow::Impl::updateStats()
 {
     Glib::ustring buf;
-    tr_session_stats stats;
     auto const* const session = core_->get_session();
 
     /* update the stats */
     if (auto const pch = gtr_pref_string_get(TR_KEY_statusbar_stats); pch == "session-ratio")
     {
-        tr_sessionGetStats(session, &stats);
+        auto const stats = tr_sessionGetStats(session);
         buf = fmt::format(_("Ratio: {ratio}"), fmt::arg("ratio", tr_strlratio(stats.ratio)));
     }
     else if (pch == "session-transfer")
     {
-        tr_sessionGetStats(session, &stats);
+        auto const stats = tr_sessionGetStats(session);
         buf = fmt::format(
             C_("current session totals", "Down: {downloaded_size}, Up: {uploaded_size}"),
             fmt::arg("downloaded_size", tr_strlsize(stats.downloadedBytes)),
@@ -600,7 +606,7 @@ void MainWindow::Impl::updateStats()
     }
     else if (pch == "total-transfer")
     {
-        tr_sessionGetCumulativeStats(session, &stats);
+        auto const stats = tr_sessionGetCumulativeStats(session);
         buf = fmt::format(
             C_("all-time totals", "Down: {downloaded_size}, Up: {uploaded_size}"),
             fmt::arg("downloaded_size", tr_strlsize(stats.downloadedBytes)),
@@ -608,7 +614,7 @@ void MainWindow::Impl::updateStats()
     }
     else /* default is total-ratio */
     {
-        tr_sessionGetCumulativeStats(session, &stats);
+        auto const stats = tr_sessionGetCumulativeStats(session);
         buf = fmt::format(_("Ratio: {ratio}"), fmt::arg("ratio", tr_strlratio(stats.ratio)));
     }
 

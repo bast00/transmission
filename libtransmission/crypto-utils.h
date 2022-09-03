@@ -1,13 +1,15 @@
 // This file Copyright © 2007-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
 #ifndef TR_CRYPTO_UTILS_H
 #define TR_CRYPTO_UTILS_H
 
-#include <cstdint> // uint8_t
+#include <array>
 #include <cstddef> // size_t
+#include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -19,101 +21,50 @@
 *** @{
 **/
 
-/** @brief Opaque SHA1 context type. */
-using tr_sha1_ctx_t = void*;
-/** @brief Opaque DH context type. */
-using tr_dh_ctx_t = void*;
-/** @brief Opaque DH secret key type. */
-using tr_dh_secret_t = void*;
+class tr_sha1
+{
+public:
+    static std::unique_ptr<tr_sha1> create();
+    virtual ~tr_sha1() = default;
+
+    virtual void clear() = 0;
+    virtual void add(void const* data, size_t data_length) = 0;
+    [[nodiscard]] virtual tr_sha1_digest_t finish() = 0;
+
+    template<typename... T>
+    [[nodiscard]] static tr_sha1_digest_t digest(T... args)
+    {
+        auto context = tr_sha1::create();
+        (context->add(std::data(args), std::size(args)), ...);
+        return context->finish();
+    }
+};
+
+class tr_sha256
+{
+public:
+    static std::unique_ptr<tr_sha256> create();
+    virtual ~tr_sha256() = default;
+
+    virtual void clear() = 0;
+    virtual void add(void const* data, size_t data_length) = 0;
+    [[nodiscard]] virtual tr_sha256_digest_t finish() = 0;
+
+    template<typename... T>
+    [[nodiscard]] static tr_sha256_digest_t digest(T... args)
+    {
+        auto context = tr_sha256::create();
+        (context->add(std::data(args), std::size(args)), ...);
+        return context->finish();
+    }
+};
+
 /** @brief Opaque SSL context type. */
 using tr_ssl_ctx_t = void*;
 /** @brief Opaque X509 certificate store type. */
 using tr_x509_store_t = void*;
 /** @brief Opaque X509 certificate type. */
 using tr_x509_cert_t = void*;
-
-/**
- * @brief Allocate and initialize new SHA1 hasher context.
- */
-tr_sha1_ctx_t tr_sha1_init(void);
-
-/**
- * @brief Update SHA1 hash.
- */
-bool tr_sha1_update(tr_sha1_ctx_t handle, void const* data, size_t data_length);
-
-/**
- * @brief Finalize and export SHA1 hash, free hasher context.
- */
-std::optional<tr_sha1_digest_t> tr_sha1_final(tr_sha1_ctx_t handle);
-
-/**
- * @brief Generate a SHA1 hash from one or more chunks of memory.
- */
-template<typename... T>
-std::optional<tr_sha1_digest_t> tr_sha1(T... args)
-{
-    auto ctx = tr_sha1_init();
-    if (ctx == nullptr)
-    {
-        return std::nullopt;
-    }
-
-    if ((tr_sha1_update(ctx, std::data(args), std::size(args)) && ...))
-    {
-        return tr_sha1_final(ctx);
-    }
-
-    // one of the update() calls failed so we will return nullopt,
-    // but we need to call final() first to ensure ctx is released
-    tr_sha1_final(ctx);
-    return std::nullopt;
-}
-
-/**
- * @brief Allocate and initialize new Diffie-Hellman (DH) key exchange context.
- */
-tr_dh_ctx_t tr_dh_new(
-    uint8_t const* prime_num,
-    size_t prime_num_length,
-    uint8_t const* generator_num,
-    size_t generator_num_length);
-
-/**
- * @brief Free DH key exchange context.
- */
-void tr_dh_free(tr_dh_ctx_t handle);
-
-/**
- * @brief Generate private and public DH keys, export public key.
- */
-bool tr_dh_make_key(tr_dh_ctx_t handle, size_t private_key_length, uint8_t* public_key, size_t* public_key_length);
-
-/**
- * @brief Perform DH key exchange, generate secret key.
- */
-tr_dh_secret_t tr_dh_agree(tr_dh_ctx_t handle, uint8_t const* other_public_key, size_t other_public_key_length);
-
-/**
- * @brief Calculate SHA1 hash of DH secret key, prepending and/or appending
- *        given data to the key during calculation.
- */
-std::optional<tr_sha1_digest_t> tr_dh_secret_derive(
-    tr_dh_secret_t handle,
-    void const* prepend_data,
-    size_t prepend_data_size,
-    void const* append_data,
-    size_t append_data_size);
-
-/**
- * @brief Free DH secret key returned by @ref tr_dh_agree.
- */
-void tr_dh_secret_free(tr_dh_secret_t handle);
-
-/**
- * @brief Align DH key (big-endian number) to required length (internal, do not use).
- */
-void tr_dh_align_key(uint8_t* key_buffer, size_t key_size, size_t buffer_size);
 
 /**
  * @brief Get X509 certificate store from SSL context.
@@ -128,7 +79,7 @@ bool tr_x509_store_add(tr_x509_store_t handle, tr_x509_cert_t cert);
 /**
  * @brief Allocate and initialize new X509 certificate from DER-encoded buffer.
  */
-tr_x509_cert_t tr_x509_cert_new(void const* der_data, size_t der_data_size);
+tr_x509_cert_t tr_x509_cert_new(void const* der, size_t der_length);
 
 /**
  * @brief Free X509 certificate returned by @ref tr_x509_cert_new.
@@ -156,7 +107,7 @@ bool tr_rand_buffer(void* buffer, size_t length);
 /**
  * @brief Generate a SSHA password from its plaintext source.
  */
-std::string tr_ssha1(std::string_view plain_text);
+std::string tr_ssha1(std::string_view plaintext);
 
 /**
  * @brief Return true if this is salted text, false otherwise
@@ -166,7 +117,7 @@ bool tr_ssha1_test(std::string_view text);
 /**
  * @brief Validate a test password against the a ssha1 password.
  */
-bool tr_ssha1_matches(std::string_view ssha1, std::string_view plain_text);
+bool tr_ssha1_matches(std::string_view ssha1, std::string_view plaintext);
 
 /**
  * @brief Translate null-terminated string into base64.
@@ -189,6 +140,41 @@ std::string tr_sha1_to_string(tr_sha1_digest_t const&);
  * @brief Generate a sha1 digest from a hex string.
  */
 std::optional<tr_sha1_digest_t> tr_sha1_from_string(std::string_view hex);
+
+/**
+ * @brief Generate an ascii hex string for a sha256 digest.
+ */
+std::string tr_sha256_to_string(tr_sha256_digest_t const&);
+
+/**
+ * @brief Generate a sha256 digest from a hex string.
+ */
+std::optional<tr_sha256_digest_t> tr_sha256_from_string(std::string_view hex);
+
+// Convenience utility to efficiently get many random small values.
+// Use this instead of making a lot of calls to tr_rand_int().
+class tr_salt_shaker
+{
+public:
+    [[nodiscard]] auto operator()() noexcept
+    {
+        if (pos == std::size(buf))
+        {
+            pos = 0U;
+        }
+
+        if (pos == 0U)
+        {
+            tr_rand_buffer(std::data(buf), std::size(buf));
+        }
+
+        return buf[pos++];
+    }
+
+private:
+    size_t pos = 0;
+    std::array<uint8_t, 1024U> buf;
+};
 
 /** @} */
 

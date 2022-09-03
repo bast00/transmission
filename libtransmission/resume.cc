@@ -57,9 +57,9 @@ static size_t addPeers(tr_torrent* tor, uint8_t const* buf, size_t buflen)
     size_t const n_in = buflen / sizeof(tr_pex);
     size_t const n_pex = std::min(n_in, size_t{ MAX_REMEMBERED_PEERS });
 
-    tr_pex pex[MAX_REMEMBERED_PEERS];
-    memcpy(pex, buf, sizeof(tr_pex) * n_pex);
-    return tr_peerMgrAddPex(tor, TR_PEER_FROM_RESUME, pex, n_pex);
+    auto pex = std::array<tr_pex, MAX_REMEMBERED_PEERS>{};
+    memcpy(std::data(pex), buf, sizeof(tr_pex) * n_pex);
+    return tr_peerMgrAddPex(tor, TR_PEER_FROM_RESUME, std::data(pex), n_pex);
 }
 
 static auto loadPeers(tr_variant* dict, tr_torrent* tor)
@@ -655,7 +655,7 @@ static auto loadFromFile(tr_torrent* tor, tr_resume::fields_t fieldsToLoad, bool
     auto const wasDirty = tor->isDirty;
 
     auto const migrated = tr_torrent_metainfo::migrateFile(
-        tor->session->resume_dir,
+        tor->session->resumeDir(),
         tor->name(),
         tor->infoHashString(),
         ".resume"sv);
@@ -669,12 +669,7 @@ static auto loadFromFile(tr_torrent* tor, tr_resume::fields_t fieldsToLoad, bool
     tr_error* error = nullptr;
     auto top = tr_variant{};
     if (!tr_loadFile(filename, buf, &error) ||
-        !tr_variantFromBuf(
-            &top,
-            TR_VARIANT_PARSE_BENC | TR_VARIANT_PARSE_INPLACE,
-            { std::data(buf), std::size(buf) },
-            nullptr,
-            &error))
+        !tr_variantFromBuf(&top, TR_VARIANT_PARSE_BENC | TR_VARIANT_PARSE_INPLACE, buf, nullptr, &error))
     {
         tr_logAddDebugTor(tor, fmt::format("Couldn't read '{}': {}", filename, error->message));
         tr_error_clear(&error);
@@ -846,7 +841,7 @@ static auto loadFromFile(tr_torrent* tor, tr_resume::fields_t fieldsToLoad, bool
      * same resume information... */
     tor->isDirty = wasDirty;
 
-    tr_variantFree(&top);
+    tr_variantClear(&top);
     return fields_loaded;
 }
 
@@ -960,7 +955,7 @@ void save(tr_torrent* tor)
         tor->setLocalError(fmt::format(FMT_STRING("Unable to save resume file: {:s}"), tr_strerror(err)));
     }
 
-    tr_variantFree(&top);
+    tr_variantClear(&top);
 }
 
 } // namespace tr_resume

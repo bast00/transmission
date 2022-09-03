@@ -3,6 +3,7 @@
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <algorithm> // std::transform()
 #include <memory>
 #include <set>
 #include <string>
@@ -10,10 +11,6 @@
 
 #include <glibmm.h>
 #include <glibmm/i18n.h>
-
-#include <libtransmission/transmission.h>
-#include <libtransmission/utils.h>
-#include <libtransmission/web-utils.h>
 
 #include "FaviconCache.h" /* gtr_get_favicon() */
 #include "FilterBar.h"

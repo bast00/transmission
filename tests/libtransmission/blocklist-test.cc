@@ -1,5 +1,5 @@
 // This file Copyright (C) 2013-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -12,9 +12,8 @@
 #include "file.h"
 #include "net.h"
 #include "peer-socket.h"
-#include "session.h" // tr_sessionIsAddressBlocked()
+#include "session.h" // tr_session.tr_session.addressIsBlocked()
 #include "tr-strbuf.h"
-#include "utils.h"
 
 #include "test-fixtures.h"
 
@@ -59,8 +58,8 @@ protected:
 
     bool addressIsBlocked(char const* address_str)
     {
-        struct tr_address addr = {};
-        return !tr_address_from_string(&addr, address_str) || tr_sessionIsAddressBlocked(session_, &addr);
+        auto const addr = tr_address::fromString(address_str);
+        return !addr || session_->addressIsBlocked(*addr);
     }
 };
 
@@ -69,11 +68,11 @@ TEST_F(BlocklistTest, parsing)
     EXPECT_EQ(0U, tr_blocklistGetRuleCount(session_));
 
     // init the blocklist
-    auto const path = tr_pathbuf{ tr_sessionGetConfigDir(session_), "/blocklists/level1" };
+    auto const path = tr_pathbuf{ session_->configDir(), "/blocklists/level1"sv };
     createFileWithContents(path, Contents1);
     tr_sessionReloadBlocklists(session_);
     EXPECT_TRUE(tr_blocklistExists(session_));
-    EXPECT_EQ(5, tr_blocklistGetRuleCount(session_));
+    EXPECT_EQ(size_t{ 5 }, tr_blocklistGetRuleCount(session_));
 
     // enable the blocklist
     EXPECT_FALSE(tr_blocklistIsEnabled(session_));
@@ -105,30 +104,30 @@ TEST_F(BlocklistTest, parsing)
 TEST_F(BlocklistTest, updating)
 {
     // init the session
-    auto const path = tr_pathbuf{ tr_sessionGetConfigDir(session_), "/blocklists/level1" };
+    auto const path = tr_pathbuf{ session_->configDir(), "/blocklists/level1"sv };
 
     // no blocklist to start with...
-    EXPECT_EQ(0, tr_blocklistGetRuleCount(session_));
+    EXPECT_EQ(0U, tr_blocklistGetRuleCount(session_));
 
     // test that updated source files will get loaded
     createFileWithContents(path, Contents1);
     tr_sessionReloadBlocklists(session_);
-    EXPECT_EQ(5, tr_blocklistGetRuleCount(session_));
+    EXPECT_EQ(5U, tr_blocklistGetRuleCount(session_));
 
     // test that updated source files will get loaded
     createFileWithContents(path, Contents2);
     tr_sessionReloadBlocklists(session_);
-    EXPECT_EQ(6, tr_blocklistGetRuleCount(session_));
+    EXPECT_EQ(6U, tr_blocklistGetRuleCount(session_));
 
     // test that updated source files will get loaded
     createFileWithContents(path, Contents1);
     tr_sessionReloadBlocklists(session_);
-    EXPECT_EQ(5, tr_blocklistGetRuleCount(session_));
+    EXPECT_EQ(5U, tr_blocklistGetRuleCount(session_));
 
     // ensure that new files, if bad, get skipped
     createFileWithContents(path, "# nothing useful\n");
     tr_sessionReloadBlocklists(session_);
-    EXPECT_EQ(5, tr_blocklistGetRuleCount(session_));
+    EXPECT_EQ(5U, tr_blocklistGetRuleCount(session_));
 
     // cleanup
 }

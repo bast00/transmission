@@ -3,10 +3,14 @@
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#ifndef __TRANSMISSION__
+#error only libtransmission should #include this header.
+#endif
+
 #ifndef TR_POPCNT_H
 #define TR_POPCNT_H
 
-#include <stdint.h>
+#include <cstdint>
 
 /* Avoid defining irrelevant helpers that might interfere with other
  * preprocessor logic. */
@@ -68,7 +72,7 @@ struct tr_popcnt
         /* Make sure we know how to find that right __builtin_popcount. */
         static_assert(
             sizeof(T) == sizeof(long long) || sizeof(T) == sizeof(long) || sizeof(T) <= sizeof(int),
-            "Unkown type size!");
+            "Unknown type size!");
 
         if constexpr (sizeof(T) == sizeof(long long))
         {
@@ -170,7 +174,7 @@ struct tr_popcnt
         {
             /* Use LUT for small sizes. In reality we only need half a
              * byte for each value if ever hit a case where perf is
-             * limitted by severe bottleneck on L1D this can be
+             * limited by severe bottleneck on L1D this can be
              * optimized. */
             static constexpr uint8_t popcnt_lut[256] = {
                 0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4, 1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5, 1, 2, 2, 3, 2,

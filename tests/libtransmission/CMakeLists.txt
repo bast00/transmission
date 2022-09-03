@@ -14,8 +14,10 @@ add_executable(libtransmission-test
     file-piece-map-test.cc
     file-test.cc
     getopt-test.cc
+    handshake-test.cc
     history-test.cc
     json-test.cc
+    lpd-test.cc
     magnet-metainfo-test.cc
     makemeta-test.cc
     move-test.cc
@@ -23,6 +25,7 @@ add_executable(libtransmission-test
     peer-mgr-active-requests-test.cc
     peer-mgr-wishlist-test.cc
     peer-msgs-test.cc
+    platform-test.cc
     quark-test.cc
     remove-test.cc
     rename-test.cc
@@ -33,6 +36,7 @@ add_executable(libtransmission-test
     subprocess-test.cc
     test-fixtures.h
     torrent-files-test.cc
+    torrent-magnet-test.cc
     torrent-metainfo-test.cc
     torrents-test.cc
     utils-test.cc
@@ -52,6 +56,8 @@ target_include_directories(libtransmission-test
 
 target_include_directories(libtransmission-test SYSTEM
     PRIVATE
+        ${WIDE_INTEGER_INCLUDE_DIRS}
+        ${B64_INCLUDE_DIRS}
         ${CURL_INCLUDE_DIRS}
         ${EVENT2_INCLUDE_DIRS})
 

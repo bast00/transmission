@@ -14,13 +14,14 @@
 #include <fmt/core.h>
 
 #include "transmission.h"
+
 #include "completion.h"
 #include "crypto-utils.h"
 #include "file.h"
 #include "log.h"
 #include "torrent.h"
 #include "tr-assert.h"
-#include "utils.h" /* tr_malloc(), tr_free() */
+#include "utils.h" // tr_time(), tr_wait_msec()
 #include "verify.h"
 
 /***
@@ -43,7 +44,7 @@ static bool verifyTorrent(tr_torrent* tor, bool const* stopFlag)
     tr_file_index_t prev_file_index = ~file_index;
     tr_piece_index_t piece = 0;
     auto buffer = std::vector<std::byte>(1024 * 256);
-    auto sha = tr_sha1_init();
+    auto sha = tr_sha1::create();
 
     tr_logAddDebugTor(tor, "verifying torrent...");
 
@@ -78,7 +79,7 @@ static bool verifyTorrent(tr_torrent* tor, bool const* stopFlag)
             if (tr_sys_file_read_at(fd, std::data(buffer), bytes_this_pass, file_pos, &num_read) && num_read > 0)
             {
                 bytes_this_pass = num_read;
-                tr_sha1_update(sha, std::data(buffer), bytes_this_pass);
+                sha->add(std::data(buffer), bytes_this_pass);
                 tr_sys_file_advise(fd, file_pos, bytes_this_pass, TR_SYS_FILE_ADVICE_DONT_NEED);
             }
         }
@@ -92,8 +93,7 @@ static bool verifyTorrent(tr_torrent* tor, bool const* stopFlag)
         /* if we're finishing a piece... */
         if (left_in_piece == 0)
         {
-            auto const hash = tr_sha1_final(sha);
-            auto const has_piece = hash && *hash == tor->pieceHash(piece);
+            auto const has_piece = sha->finish() == tor->pieceHash(piece);
 
             if (has_piece || had_piece)
             {
@@ -112,7 +112,7 @@ static bool verifyTorrent(tr_torrent* tor, bool const* stopFlag)
                 tr_wait_msec(MsecToSleepPerSecondDuringVerify);
             }
 
-            sha = tr_sha1_init();
+            sha->clear();
             ++piece;
             tor->setVerifyProgress(piece / float(tor->pieceCount()));
             piece_pos = 0;
@@ -137,8 +137,6 @@ static bool verifyTorrent(tr_torrent* tor, bool const* stopFlag)
     {
         tr_sys_file_close(fd);
     }
-
-    tr_sha1_final(sha);
 
     /* stopwatch */
     time_t const end = tr_time();

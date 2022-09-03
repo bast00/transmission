@@ -1,4 +1,4 @@
-// This file Copyright © 2005-2021 Transmission authors and contributors.
+// This file Copyright © 2005-2022 Transmission authors and contributors.
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
@@ -94,7 +94,7 @@ int main(int argc, char** argv)
     tr_formatter_speed_init(speed_K, _(speed_K_str), _(speed_M_str), _(speed_G_str), _(speed_T_str));
 
     /* set up the config dir */
-    if (config_dir.empty())
+    if (std::empty(config_dir))
     {
         config_dir = tr_getDefaultConfigDir(AppConfigDirName);
     }

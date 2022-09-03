@@ -1,5 +1,5 @@
 // This file Copyright © 2012-2022 Mnemosyne LLC.
-// It may be used under GPLv2(SPDX : GPL - 2.0), GPLv3(SPDX : GPL - 3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -8,7 +8,6 @@
 #include <cinttypes> // PRIu64
 #include <cstdio>
 #include <ctime>
-#include <iterator>
 #include <string>
 #include <string_view>
 
@@ -193,7 +192,14 @@ void showInfo(app_opts const& opts, tr_torrent_metainfo const& metainfo)
     {
         printf("GENERAL\n\n");
         printf("  Name: %s\n", metainfo.name().c_str());
-        printf("  Hash: %" TR_PRIsv "\n", TR_PRIsv_ARG(metainfo.infoHashString()));
+        if (metainfo.hasV1Metadata())
+        {
+            printf("  Hash v1: %" TR_PRIsv "\n", TR_PRIsv_ARG(metainfo.infoHashString()));
+        }
+        if (metainfo.hasV2Metadata())
+        {
+            printf("  Hash v2: %" TR_PRIsv "\n", TR_PRIsv_ARG(metainfo.infoHash2String()));
+        }
         printf("  Created by: %s\n", std::empty(metainfo.creator()) ? "Unknown" : metainfo.creator().c_str());
         printf("  Created on: %s\n\n", toString(metainfo.dateCreated()).c_str());
 
@@ -333,19 +339,15 @@ void doScrape(tr_torrent_metainfo const& metainfo)
         }
 
         // build the full scrape URL
-        auto escaped = std::array<char, TR_SHA1_DIGEST_LEN * 3 + 1>{};
-        tr_http_escape_sha1(std::data(escaped), metainfo.infoHash());
-        auto const scrape = tracker.scrape.sv();
-        auto const url = tr_urlbuf{ scrape,
-                                    tr_strvContains(scrape, '?') ? '&' : '?',
-                                    "info_hash="sv,
-                                    std::string_view{ std::data(escaped) } };
-
-        printf("%" TR_PRIsv " ... ", TR_PRIsv_ARG(url));
+        auto scrape_url = tr_urlbuf{ tracker.scrape.sv() };
+        auto delimiter = tr_strvContains(scrape_url, '?') ? '&' : '?';
+        scrape_url.append(delimiter, "info_hash=");
+        tr_urlPercentEncode(std::back_inserter(scrape_url), metainfo.infoHash());
+        printf("%" TR_PRIsv " ... ", TR_PRIsv_ARG(scrape_url));
         fflush(stdout);
 
         // execute the http scrape
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_URL, scrape_url.c_str());
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, TimeoutSecs);
         if (auto const res = curl_easy_perform(curl); res != CURLE_OK)
         {
@@ -397,7 +399,7 @@ void doScrape(tr_torrent_metainfo const& metainfo)
             }
         }
 
-        tr_variantFree(&top);
+        tr_variantClear(&top);
 
         if (!matched)
         {

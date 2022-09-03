@@ -7,9 +7,11 @@
 #include <cctype>
 #include <cerrno> /* EILSEQ, EINVAL */
 #include <cmath> /* fabs() */
+#include <cstdlib>
 #include <cstring>
 #include <deque>
 #include <string_view>
+#include <utility>
 
 #define UTF_CPP_CPLUSPLUS 201703L
 #include <utf8.h>
@@ -348,7 +350,7 @@ static void action_callback_POP(
     }
 }
 
-bool tr_variantParseJson(tr_variant& setme, int parse_opts, std::string_view benc, char const** setme_end, tr_error** error)
+bool tr_variantParseJson(tr_variant& setme, int parse_opts, std::string_view json, char const** setme_end, tr_error** error)
 {
     TR_ASSERT((parse_opts & TR_VARIANT_PARSE_JSON) != 0);
 
@@ -362,7 +364,7 @@ bool tr_variantParseJson(tr_variant& setme, int parse_opts, std::string_view ben
     jsonsl_enable_all_callbacks(jsn);
 
     data.error = nullptr;
-    data.size = std::size(benc);
+    data.size = std::size(json);
     data.has_content = false;
     data.key = ""sv;
     data.keybuf = evbuffer_new();
@@ -373,7 +375,7 @@ bool tr_variantParseJson(tr_variant& setme, int parse_opts, std::string_view ben
     data.top = &setme;
 
     /* parse it */
-    jsonsl_feed(jsn, static_cast<jsonsl_char_t const*>(std::data(benc)), std::size(benc));
+    jsonsl_feed(jsn, static_cast<jsonsl_char_t const*>(std::data(json)), std::size(json));
 
     /* EINVAL if there was no content */
     if (data.error == nullptr && !data.has_content)
@@ -384,7 +386,7 @@ bool tr_variantParseJson(tr_variant& setme, int parse_opts, std::string_view ben
     /* maybe set the end ptr */
     if (setme_end != nullptr)
     {
-        *setme_end = std::data(benc) + jsn->pos;
+        *setme_end = std::data(json) + jsn->pos;
     }
 
     /* cleanup */
@@ -419,17 +421,17 @@ struct jsonWalk
 
 static void jsonIndent(struct jsonWalk* data)
 {
-    static char buf[1024] = { '\0' };
+    static auto buf = std::array<char, 1024>{};
 
-    if (*buf == '\0')
+    if (buf.front() == '\0')
     {
-        memset(buf, ' ', sizeof(buf));
+        memset(std::data(buf), ' ', std::size(buf));
         buf[0] = '\n';
     }
 
     if (data->doIndent)
     {
-        evbuffer_add(data->out, buf, std::size(data->parents) * 4 + 1);
+        evbuffer_add(data->out, std::data(buf), std::size(data->parents) * 4 + 1);
     }
 }
 

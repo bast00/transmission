@@ -1,8 +1,9 @@
 // This file Copyright (C) 2021-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <set>
@@ -10,8 +11,8 @@
 #include "transmission.h"
 
 #include "block-info.h"
+#include "crypto-utils.h" // tr_rand_buffer()
 #include "completion.h"
-#include "crypto-utils.h"
 
 #include "gtest/gtest.h"
 
@@ -471,6 +472,36 @@ TEST_F(CompletionTest, countHasBytesInSpan)
     EXPECT_EQ(BlockSize * 1.5, completion.countHasBytesInSpan({ BlockSize / 2, BlockSize * 2 + BlockSize / 2 }));
 }
 
-TEST_F(CompletionTest, status)
+TEST_F(CompletionTest, wantNone)
 {
+    auto torrent = TestTorrent{};
+    auto constexpr TotalSize = uint64_t{ BlockSize * 4096 };
+    auto constexpr PieceSize = uint64_t{ BlockSize * 64 };
+    auto const block_info = tr_block_info{ TotalSize, PieceSize };
+    auto completion = tr_completion(&torrent, &block_info);
+
+    // we have some data
+    completion.addBlock(0);
+
+    // and want nothing
+    for (tr_piece_index_t i = 0, n = block_info.blockCount(); i < n; ++i)
+    {
+        torrent.dnd_pieces.insert(i);
+    }
+    completion.invalidateSizeWhenDone();
+
+    EXPECT_LE(completion.hasTotal(), completion.sizeWhenDone());
+    EXPECT_EQ(completion.hasTotal(), block_info.BlockSize);
+    EXPECT_EQ(completion.sizeWhenDone(), block_info.BlockSize);
+    EXPECT_LE(completion.leftUntilDone(), completion.sizeWhenDone());
+    EXPECT_EQ(completion.leftUntilDone(), 0);
+
+    // but we magically get a block anyway
+    completion.addBlock(1);
+
+    EXPECT_LE(completion.hasTotal(), completion.sizeWhenDone());
+    EXPECT_EQ(completion.hasTotal(), 2 * block_info.BlockSize);
+    EXPECT_EQ(completion.sizeWhenDone(), 2 * block_info.BlockSize);
+    EXPECT_LE(completion.leftUntilDone(), completion.sizeWhenDone());
+    EXPECT_EQ(completion.leftUntilDone(), 0);
 }

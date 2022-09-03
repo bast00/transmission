@@ -3,11 +3,13 @@
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <algorithm> // std::max()
 #include <climits> /* INT_MAX */
 #include <cstring> // strchr()
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include <glibmm.h>
 #include <glibmm/i18n.h>
@@ -135,7 +137,7 @@ std::string getShortTransferString(
 
     if (bool const have_up = have_meta && st->peersGettingFromUs > 0; have_up)
     {
-        return fmt::format(_("{upload_speed} ▲"), fmt::arg("upload_speed", tr_formatter_speed_KBps(downloadSpeed_KBps)));
+        return fmt::format(_("{upload_speed} ▲"), fmt::arg("upload_speed", tr_formatter_speed_KBps(uploadSpeed_KBps)));
     }
 
     if (st->isStalled)
@@ -223,8 +225,8 @@ auto getActivityString(
             return fmt::format(
                 ngettext(
                     // xgettext:no-c-format
-                    "Downloading metadata from {active_count} connected peer ({percent_done:d}% done)",
-                    "Downloading metadata from {active_count} connected peers ({percent_done:d}% done)",
+                    "Downloading metadata from {active_count} connected peer ({percent_done}% done)",
+                    "Downloading metadata from {active_count} connected peers ({percent_done}% done)",
                     st->peersConnected),
                 fmt::arg("active_count", st->peersConnected),
                 fmt::arg("percent_done", tr_strpercent(st->metadataPercentComplete * 100.0)));

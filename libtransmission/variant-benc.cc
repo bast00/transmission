@@ -67,13 +67,14 @@ std::optional<int64_t> ParseInt(std::string_view* benc)
     }
 
     // leading zeroes are not allowed
-    if ((walk[0] == '0' && (isdigit(walk[1]) != 0)) || (walk[0] == '-' && walk[1] == '0' && (isdigit(walk[2]) != 0)))
+    if ((walk[0] == '0' && (isdigit(static_cast<unsigned char>(walk[1])) != 0)) ||
+        (walk[0] == '-' && walk[1] == '0' && (isdigit(static_cast<unsigned char>(walk[2])) != 0)))
     {
         return {};
     }
 
     // parse the string and make sure the next char is `Suffix`
-    auto const value = tr_parseNum<int64_t>(walk);
+    auto const value = tr_parseNum<int64_t>(walk, &walk);
     if (!value || !tr_strvStartsWith(walk, Suffix))
     {
         return {};
@@ -101,12 +102,12 @@ std::optional<std::string_view> ParseString(std::string_view* benc)
 
     // get the string length
     auto svtmp = benc->substr(0, colon_pos);
-    if (!std::all_of(std::begin(svtmp), std::end(svtmp), [](auto ch) { return isdigit(ch) != 0; }))
+    if (!std::all_of(std::begin(svtmp), std::end(svtmp), [](auto ch) { return isdigit(static_cast<unsigned char>(ch)) != 0; }))
     {
         return {};
     }
 
-    auto const len = tr_parseNum<size_t>(svtmp);
+    auto const len = tr_parseNum<size_t>(svtmp, &svtmp);
     if (!len || *len >= MaxBencStrLength)
     {
         return {};
@@ -143,6 +144,11 @@ struct MyHandler : public transmission::benc::Handler
         , parse_opts_{ parse_opts }
     {
     }
+
+    MyHandler(MyHandler&&) = delete;
+    MyHandler(MyHandler const&) = delete;
+    MyHandler& operator=(MyHandler&&) = delete;
+    MyHandler& operator=(MyHandler const&) = delete;
 
     ~MyHandler() override = default;
 

@@ -12,8 +12,6 @@
 #include <string_view>
 #include <utility>
 
-#include <event2/buffer.h>
-
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 
@@ -99,11 +97,8 @@ void logAddImpl(
     }
 
     auto const lock = log_state.unique_lock();
-#ifdef _WIN32
 
-    OutputDebugStringA(fmt::format(FMT_STRING("{:s}\r\n"), msg).c_str());
-
-#elif defined(__ANDROID__)
+#if defined(__ANDROID__)
 
     int prio;
 
@@ -138,13 +133,13 @@ void logAddImpl(
 
     if (tr_logGetQueueEnabled())
     {
-        auto* const newmsg = tr_new0(tr_log_message, 1);
+        auto* const newmsg = new tr_log_message{};
         newmsg->level = level;
         newmsg->when = tr_time();
-        newmsg->message = tr_strvDup(msg);
+        newmsg->message = msg;
         newmsg->file = file;
         newmsg->line = line;
-        newmsg->name = tr_strvDup(name);
+        newmsg->name = name;
 
         *log_state.queue_tail_ = newmsg;
         log_state.queue_tail_ = &newmsg->next;
@@ -162,8 +157,6 @@ void logAddImpl(
     }
     else
     {
-        char timestr[64];
-
         tr_sys_file_t fp = tr_logGetFile();
 
         if (fp == TR_BAD_SYS_FILE)
@@ -171,12 +164,12 @@ void logAddImpl(
             fp = tr_sys_file_get_std(TR_STD_SYS_FILE_ERR);
         }
 
-        tr_logGetTimeStr(timestr, sizeof(timestr));
-
+        auto timestr = std::array<char, 64>{};
+        tr_logGetTimeStr(std::data(timestr), std::size(timestr));
         tr_sys_file_write_line(
             fp,
-            !std::empty(name) ? fmt::format(FMT_STRING("[{:s}] {:s}: {:s}"), timestr, name, msg) :
-                                fmt::format(FMT_STRING("[{:s}] {:s}"), timestr, msg));
+            !std::empty(name) ? fmt::format(FMT_STRING("[{:s}] {:s}: {:s}"), std::data(timestr), name, msg) :
+                                fmt::format(FMT_STRING("[{:s}] {:s}"), std::data(timestr), msg));
         tr_sys_file_flush(fp);
     }
 #endif
@@ -221,15 +214,13 @@ tr_log_message* tr_logGetQueue()
     return ret;
 }
 
-void tr_logFreeQueue(tr_log_message* list)
+void tr_logFreeQueue(tr_log_message* freeme)
 {
-    while (list != nullptr)
+    while (freeme != nullptr)
     {
-        tr_log_message* next = list->next;
-        tr_free(list->message);
-        tr_free(list->name);
-        tr_free(list);
-        list = next;
+        auto* const next = freeme->next;
+        delete freeme;
+        freeme = next;
     }
 }
 

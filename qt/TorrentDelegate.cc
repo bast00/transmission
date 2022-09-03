@@ -3,6 +3,8 @@
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <utility>
+
 #include <QApplication>
 #include <QFont>
 #include <QFontMetrics>
@@ -379,7 +381,7 @@ QString TorrentDelegate::statusString(Torrent const& tor)
 
     if (tor.isReadyToTransfer())
     {
-        QString s = shortTransferString(tor);
+        QString const s = shortTransferString(tor);
 
         if (!s.isEmpty())
         {
@@ -526,14 +528,14 @@ void TorrentDelegate::drawTorrent(QPainter* painter, QStyleOptionViewItem const&
 
     auto const color_role = is_item_selected ? QPalette::HighlightedText : QPalette::Text;
 
-    QStyle::State progress_bar_state(option.state | QStyle::State_Horizontal);
+    QStyle::State progress_bar_state(option.state);
 
     if (is_paused)
     {
         progress_bar_state = QStyle::State_None;
     }
 
-    progress_bar_state |= QStyle::State_Small;
+    progress_bar_state |= QStyle::State_Small | QStyle::State_Horizontal;
 
     QIcon::Mode const emblem_im = is_item_selected ? QIcon::Selected : QIcon::Normal;
     QIcon const emblem_icon = tor.hasError() ? getWarningEmblem() : QIcon();

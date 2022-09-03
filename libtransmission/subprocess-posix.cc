@@ -3,6 +3,7 @@
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <array>
 #include <cerrno>
 #include <csignal>
 #include <map>
@@ -16,10 +17,12 @@
 #include <fmt/format.h>
 
 #include "transmission.h"
+
 #include "error.h"
 #include "subprocess.h"
 #include "tr-assert.h"
 #include "tr-macros.h"
+#include "tr-strbuf.h"
 #include "utils.h"
 
 using namespace std::literals;
@@ -50,7 +53,7 @@ static void set_system_error(tr_error** error, int code, std::string_view what)
 static bool tr_spawn_async_in_child(
     char const* const* cmd,
     std::map<std::string_view, std::string_view> const& env,
-    char const* work_dir,
+    std::string_view work_dir,
     int pipe_fd)
 {
     auto key_sz = std::string{};
@@ -67,7 +70,7 @@ static bool tr_spawn_async_in_child(
         }
     }
 
-    if (work_dir != nullptr && chdir(work_dir) == -1)
+    if (!std::empty(work_dir) && chdir(tr_pathbuf{ work_dir }) == -1)
     {
         goto FAIL;
     }
@@ -120,7 +123,7 @@ static bool tr_spawn_async_in_parent(int pipe_fd, tr_error** error)
 bool tr_spawn_async(
     char const* const* cmd,
     std::map<std::string_view, std::string_view> const& env,
-    char const* work_dir,
+    std::string_view work_dir,
     tr_error** error)
 {
     static bool sigchld_handler_set = false;
@@ -137,9 +140,9 @@ bool tr_spawn_async(
         sigchld_handler_set = true;
     }
 
-    int pipe_fds[2];
+    auto pipe_fds = std::array<int, 2>{};
 
-    if (pipe(pipe_fds) == -1)
+    if (pipe(std::data(pipe_fds)) == -1)
     {
         set_system_error(error, errno, "Call to pipe()");
         return false;

@@ -1,9 +1,9 @@
-// This file Copyright © 2005-2021 Transmission authors and contributors.
+// This file Copyright © 2005-2022 Transmission authors and contributors.
 // It may be used under the MIT (SPDX: MIT) license.
 // License text can be found in the licenses/ folder.
 
-#include <algorithm>
 #include <memory>
+#include <vector>
 
 #include <glibmm.h>
 #include <glibmm/i18n.h>

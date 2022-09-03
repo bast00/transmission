@@ -1,5 +1,5 @@
 // This file Copyright © 2009-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -14,6 +14,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "transmission.h"
@@ -23,14 +24,12 @@
 #include "bitfield.h"
 #include "block-info.h"
 #include "completion.h"
-#include "file.h"
 #include "file-piece-map.h"
 #include "interned-string.h"
 #include "log.h"
 #include "session.h"
 #include "torrent-metainfo.h"
 #include "tr-macros.h"
-#include "tr-strbuf.h"
 
 class tr_swarm;
 struct tr_error;
@@ -60,7 +59,7 @@ bool tr_ctorGetIncompleteDir(tr_ctor const* ctor, char const** setmeIncompleteDi
 ***
 **/
 
-void tr_torrentChangeMyPort(tr_torrent* session);
+void tr_torrentChangeMyPort(tr_torrent* tor);
 
 tr_torrent* tr_torrentFindFromObfuscatedHash(tr_session* session, tr_sha1_digest_t const& hash);
 
@@ -94,11 +93,9 @@ public:
     {
     }
 
-    ~tr_torrent() override = default;
-
     void setLocation(
         std::string_view location,
-        bool move_from_current_location,
+        bool move_from_old_path,
         double volatile* setme_progress,
         int volatile* setme_state);
 
@@ -141,15 +138,15 @@ public:
     {
         return metainfo_.blockCount();
     }
-    [[nodiscard]] auto byteLoc(uint64_t byte) const
+    [[nodiscard]] constexpr auto byteLoc(uint64_t byte) const
     {
         return metainfo_.byteLoc(byte);
     }
-    [[nodiscard]] auto blockLoc(tr_block_index_t block) const
+    [[nodiscard]] constexpr auto blockLoc(tr_block_index_t block) const
     {
         return metainfo_.blockLoc(block);
     }
-    [[nodiscard]] auto pieceLoc(tr_piece_index_t piece, uint32_t offset = 0, uint32_t length = 0) const
+    [[nodiscard]] constexpr auto pieceLoc(tr_piece_index_t piece, uint32_t offset = 0, uint32_t length = 0) const
     {
         return metainfo_.pieceLoc(piece, offset, length);
     }
@@ -157,7 +154,7 @@ public:
     {
         return metainfo_.blockSize(block);
     }
-    [[nodiscard]] auto blockSpanForPiece(tr_piece_index_t piece) const
+    [[nodiscard]] constexpr auto blockSpanForPiece(tr_piece_index_t piece) const
     {
         return metainfo_.blockSpanForPiece(piece);
     }
@@ -190,17 +187,17 @@ public:
         return completion.sizeWhenDone();
     }
 
-    [[nodiscard]] auto hasMetainfo() const noexcept
+    [[nodiscard]] constexpr auto hasMetainfo() const noexcept
     {
         return completion.hasMetainfo();
     }
 
-    [[nodiscard]] auto hasAll() const noexcept
+    [[nodiscard]] constexpr auto hasAll() const noexcept
     {
         return completion.hasAll();
     }
 
-    [[nodiscard]] auto hasNone() const noexcept
+    [[nodiscard]] constexpr auto hasNone() const noexcept
     {
         return completion.hasNone();
     }
@@ -225,7 +222,7 @@ public:
         return completion.countMissingBytesInPiece(piece);
     }
 
-    [[nodiscard]] auto hasTotal() const
+    [[nodiscard]] constexpr auto hasTotal() const
     {
         return completion.hasTotal();
     }
@@ -250,7 +247,7 @@ public:
         return completeness == TR_PARTIAL_SEED;
     }
 
-    [[nodiscard]] tr_bitfield const& blocks() const noexcept
+    [[nodiscard]] constexpr auto& blocks() const noexcept
     {
         return completion.blocks();
     }
@@ -418,49 +415,49 @@ public:
         metainfo_.setName(name);
     }
 
-    [[nodiscard]] auto const& name() const noexcept
+    [[nodiscard]] constexpr auto const& name() const noexcept
     {
         return metainfo_.name();
     }
 
-    [[nodiscard]] auto const& infoHash() const noexcept
+    [[nodiscard]] constexpr auto const& infoHash() const noexcept
     {
         return metainfo_.infoHash();
     }
 
-    [[nodiscard]] auto isPrivate() const noexcept
+    [[nodiscard]] constexpr auto isPrivate() const noexcept
     {
         return metainfo_.isPrivate();
     }
 
-    [[nodiscard]] auto isPublic() const noexcept
+    [[nodiscard]] constexpr auto isPublic() const noexcept
     {
         return !this->isPrivate();
     }
 
-    [[nodiscard]] auto const& infoHashString() const noexcept
+    [[nodiscard]] constexpr auto const& infoHashString() const noexcept
     {
         return metainfo_.infoHashString();
     }
 
-    [[nodiscard]] auto dateCreated() const noexcept
+    [[nodiscard]] constexpr auto dateCreated() const noexcept
     {
         return metainfo_.dateCreated();
     }
 
     [[nodiscard]] auto torrentFile() const
     {
-        return metainfo_.torrentFile(this->session->torrent_dir);
+        return metainfo_.torrentFile(session->torrentDir());
     }
 
     [[nodiscard]] auto magnetFile() const
     {
-        return metainfo_.magnetFile(this->session->torrent_dir);
+        return metainfo_.magnetFile(session->torrentDir());
     }
 
     [[nodiscard]] auto resumeFile() const
     {
-        return metainfo_.resumeFile(this->session->resume_dir);
+        return metainfo_.resumeFile(session->resumeDir());
     }
 
     [[nodiscard]] auto magnet() const
@@ -468,27 +465,27 @@ public:
         return metainfo_.magnet();
     }
 
-    [[nodiscard]] auto const& comment() const noexcept
+    [[nodiscard]] constexpr auto const& comment() const noexcept
     {
         return metainfo_.comment();
     }
 
-    [[nodiscard]] auto const& creator() const noexcept
+    [[nodiscard]] constexpr auto const& creator() const noexcept
     {
         return metainfo_.creator();
     }
 
-    [[nodiscard]] auto const& source() const noexcept
+    [[nodiscard]] constexpr auto const& source() const noexcept
     {
         return metainfo_.source();
     }
 
-    [[nodiscard]] auto infoDictSize() const noexcept
+    [[nodiscard]] constexpr auto infoDictSize() const noexcept
     {
         return metainfo_.infoDictSize();
     }
 
-    [[nodiscard]] auto infoDictOffset() const noexcept
+    [[nodiscard]] constexpr auto infoDictOffset() const noexcept
     {
         return metainfo_.infoDictOffset();
     }
@@ -518,19 +515,19 @@ public:
         return this->isDone() ? TR_UP : TR_DOWN;
     }
 
-    [[nodiscard]] auto allowsPex() const noexcept
+    [[nodiscard]] constexpr auto allowsPex() const noexcept
     {
-        return this->isPublic() && this->session->isPexEnabled;
+        return this->isPublic() && this->session->allowsPEX();
     }
 
-    [[nodiscard]] auto allowsDht() const
+    [[nodiscard]] constexpr auto allowsDht() const noexcept
     {
-        return this->isPublic() && tr_sessionAllowsDHT(this->session);
+        return this->isPublic() && this->session->allowsDHT();
     }
 
-    [[nodiscard]] auto allowsLpd() const // local peer discovery
+    [[nodiscard]] constexpr auto allowsLpd() const noexcept // local peer discovery
     {
-        return this->isPublic() && tr_sessionAllowsLPD(this->session);
+        return this->isPublic() && this->session->allowsLPD();
     }
 
     [[nodiscard]] bool isPieceTransferAllowed(tr_direction direction) const;
@@ -589,7 +586,15 @@ public:
         return unique_id_;
     }
 
-    void setDateActive(time_t t);
+    constexpr void setDateActive(time_t t) noexcept
+    {
+        this->activityDate = t;
+
+        if (this->anyDate < t)
+        {
+            this->anyDate = t;
+        }
+    }
 
     void setLabels(std::vector<tr_quark> const& new_labels);
 
@@ -597,7 +602,7 @@ public:
         torrent's content than any other mime-type. */
     [[nodiscard]] std::string_view primaryMimeType() const;
 
-    void setDirty()
+    constexpr void setDirty() noexcept
     {
         this->isDirty = true;
     }
@@ -614,7 +619,7 @@ public:
 
     tr_torrent_metainfo metainfo_;
 
-    Bandwidth bandwidth_;
+    tr_bandwidth bandwidth_;
 
     tr_stat stats = {};
 
@@ -659,21 +664,6 @@ public:
      * and we're in the process of downloading the metainfo from
      * other peers */
     struct tr_incomplete_metadata* incompleteMetadata = nullptr;
-
-    tr_torrent_metadata_func metadata_func = nullptr;
-    void* metadata_func_user_data = nullptr;
-
-    tr_torrent_completeness_func completeness_func = nullptr;
-    void* completeness_func_user_data = nullptr;
-
-    tr_torrent_ratio_limit_hit_func ratio_limit_hit_func = nullptr;
-    void* ratio_limit_hit_func_user_data = nullptr;
-
-    tr_torrent_idle_limit_hit_func idle_limit_hit_func = nullptr;
-    void* idle_limit_hit_func_user_data = nullptr;
-
-    void* queue_started_user_data = nullptr;
-    void (*queue_started_callback)(tr_torrent*, void* queue_started_user_data) = nullptr;
 
     time_t peer_id_creation_time_ = 0;
 
@@ -772,7 +762,7 @@ private:
 
 constexpr bool tr_isTorrent(tr_torrent const* tor)
 {
-    return tor != nullptr && tr_isSession(tor->session);
+    return tor != nullptr && tor->session != nullptr;
 }
 
 /**
@@ -785,8 +775,10 @@ tr_peer_id_t const& tr_torrentGetPeerId(tr_torrent* tor);
 tr_torrent_metainfo tr_ctorStealMetainfo(tr_ctor* ctor);
 
 bool tr_ctorSetMetainfoFromFile(tr_ctor* ctor, std::string_view filename, tr_error** error = nullptr);
-bool tr_ctorSetMetainfoFromMagnetLink(tr_ctor* ctor, std::string_view filename, tr_error** error = nullptr);
+bool tr_ctorSetMetainfoFromMagnetLink(tr_ctor* ctor, std::string_view magnet_link, tr_error** error = nullptr);
 void tr_ctorSetLabels(tr_ctor* ctor, tr_quark const* labels, size_t n_labels);
+void tr_ctorSetBandwidthPriority(tr_ctor* ctor, tr_priority_t priority);
+tr_priority_t tr_ctorGetBandwidthPriority(tr_ctor const* ctor);
 tr_torrent::labels_t const& tr_ctorGetLabels(tr_ctor const* ctor);
 
 #define tr_logAddCriticalTor(tor, msg) tr_logAddCritical(msg, (tor)->name())

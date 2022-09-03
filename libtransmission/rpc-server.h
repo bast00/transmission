@@ -1,5 +1,5 @@
 // This file Copyright © 2008-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -17,8 +17,8 @@
 #include "transmission.h"
 
 #include "net.h"
+#include "timer.h"
 
-struct event;
 struct evhttp;
 struct tr_variant;
 struct tr_rpc_address;
@@ -85,7 +85,7 @@ public:
         return salted_password_;
     }
 
-    void setPassword(std::string_view salted) noexcept;
+    void setPassword(std::string_view password) noexcept;
 
     [[nodiscard]] constexpr auto isAntiBruteForceEnabled() const noexcept
     {
@@ -104,7 +104,7 @@ public:
         anti_brute_force_limit_ = limit;
     }
 
-    std::shared_ptr<libdeflate_compressor> compressor;
+    std::unique_ptr<libdeflate_compressor, void (*)(libdeflate_compressor*)> compressor;
 
     [[nodiscard]] constexpr auto const& url() const noexcept
     {
@@ -122,6 +122,7 @@ public:
 
     std::vector<std::string> hostWhitelist;
     std::vector<std::string> whitelist_;
+    std::string const web_client_dir_;
     std::string salted_password_;
     std::string username_;
     std::string whitelist_str_;
@@ -129,7 +130,7 @@ public:
 
     std::unique_ptr<struct tr_rpc_address> bindAddress;
 
-    struct event* start_retry_timer = nullptr;
+    std::unique_ptr<libtransmission::Timer> start_retry_timer;
     struct evhttp* httpd = nullptr;
     tr_session* const session;
 

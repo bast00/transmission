@@ -1,5 +1,5 @@
 // This file Copyright © 2005-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -34,7 +34,7 @@ public:
     // If you're looping through several files, passing in a non-nullptr
     // `buffer` can reduce the number of memory allocations needed to
     // load multiple files.
-    bool parseTorrentFile(std::string_view benc_filename, std::vector<char>* buffer = nullptr, tr_error** error = nullptr);
+    bool parseTorrentFile(std::string_view benc_filename, std::vector<char>* contents = nullptr, tr_error** error = nullptr);
 
     // FILES
 
@@ -71,15 +71,15 @@ public:
     {
         return blockInfo().blockCount();
     }
-    [[nodiscard]] auto byteLoc(uint64_t nth_byte) const
+    [[nodiscard]] constexpr auto byteLoc(uint64_t nth_byte) const
     {
         return blockInfo().byteLoc(nth_byte);
     }
-    [[nodiscard]] auto blockLoc(tr_block_index_t block) const
+    [[nodiscard]] constexpr auto blockLoc(tr_block_index_t block) const
     {
         return blockInfo().blockLoc(block);
     }
-    [[nodiscard]] auto pieceLoc(tr_piece_index_t piece, uint32_t offset = 0, uint32_t length = 0) const
+    [[nodiscard]] constexpr auto pieceLoc(tr_piece_index_t piece, uint32_t offset = 0, uint32_t length = 0) const
     {
         return blockInfo().pieceLoc(piece, offset, length);
     }
@@ -87,7 +87,7 @@ public:
     {
         return blockInfo().blockSize(block);
     }
-    [[nodiscard]] auto blockSpanForPiece(tr_piece_index_t piece) const
+    [[nodiscard]] constexpr auto blockSpanForPiece(tr_piece_index_t piece) const
     {
         return blockInfo().blockSpanForPiece(piece);
     }
@@ -130,12 +130,22 @@ public:
 
     [[nodiscard]] tr_sha1_digest_t const& pieceHash(tr_piece_index_t piece) const;
 
+    [[nodiscard]] bool hasV1Metadata() const noexcept
+    {
+        // need 'pieces' field and 'files' or 'length'
+        // TODO check for 'files' or 'length'
+        return !std::empty(pieces_);
+    }
+
+    [[nodiscard]] constexpr bool hasV2Metadata() const noexcept
+    {
+        return is_v2_;
+    }
+
     [[nodiscard]] constexpr auto const& dateCreated() const noexcept
     {
         return date_created_;
     }
-
-    [[nodiscard]] std::string benc() const;
 
     [[nodiscard]] constexpr auto infoDictSize() const noexcept
     {
@@ -231,4 +241,5 @@ private:
     uint64_t pieces_offset_ = 0;
 
     bool is_private_ = false;
+    bool is_v2_ = false;
 };

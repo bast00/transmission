@@ -1,18 +1,21 @@
 // This file Copyright (C) 2013-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <algorithm>
 #include <array>
 #include <cstring>
+#include <iostream>
 #include <numeric>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <unordered_set>
 
 #include "transmission.h"
 
-#include "crypto.h"
+#include "peer-mse.h"
 #include "crypto-utils.h"
 #include "utils.h"
 
@@ -31,91 +34,104 @@ auto constexpr SomeHash = tr_sha1_digest_t{
     std::byte{ 14 }, std::byte{ 15 }, std::byte{ 16 }, std::byte{ 17 }, std::byte{ 18 }, std::byte{ 19 },
 };
 
+template<size_t N>
+std::string toString(std::array<std::byte, N> const& array)
+{
+    auto ostr = std::ostringstream{};
+    ostr << '[';
+    for (auto const b : array)
+    {
+        ostr << static_cast<unsigned>(b) << ' ';
+    }
+    ostr << ']';
+    return ostr.str();
+}
+
 } // namespace
 
-TEST(Crypto, torrentHash)
+TEST(Crypto, DH)
 {
+    auto a = tr_message_stream_encryption::DH{};
+    auto b = tr_message_stream_encryption::DH{};
 
-    auto a = tr_crypto{};
-    EXPECT_FALSE(tr_cryptoGetTorrentHash(&a));
+    a.setPeerPublicKey(b.publicKey());
+    b.setPeerPublicKey(a.publicKey());
+    EXPECT_EQ(toString(a.secret()), toString(b.secret()));
+    EXPECT_EQ(a.secret(), b.secret());
+    EXPECT_EQ(96U, std::size(a.secret()));
 
-    tr_cryptoSetTorrentHash(&a, SomeHash);
-    EXPECT_TRUE(tr_cryptoGetTorrentHash(&a));
-    EXPECT_EQ(SomeHash, *tr_cryptoGetTorrentHash(&a));
-
-    a = tr_crypto{ &SomeHash, false };
-    EXPECT_TRUE(tr_cryptoGetTorrentHash(&a));
-    EXPECT_EQ(SomeHash, *tr_cryptoGetTorrentHash(&a));
+    auto c = tr_message_stream_encryption::DH{};
+    c.setPeerPublicKey(b.publicKey());
+    EXPECT_NE(a.secret(), c.secret());
+    EXPECT_NE(toString(a.secret()), toString(c.secret()));
 }
 
 TEST(Crypto, encryptDecrypt)
 {
-    auto a = tr_crypto{ &SomeHash, false };
-    auto b = tr_crypto_{ &SomeHash, true };
+    auto a_dh = tr_message_stream_encryption::DH{};
+    auto b_dh = tr_message_stream_encryption::DH{};
 
-    auto public_key_length = int{};
-    EXPECT_TRUE(tr_cryptoComputeSecret(&a, tr_cryptoGetMyPublicKey_(&b, &public_key_length)));
-    EXPECT_TRUE(tr_cryptoComputeSecret_(&b, tr_cryptoGetMyPublicKey(&a, &public_key_length)));
+    a_dh.setPeerPublicKey(b_dh.publicKey());
+    b_dh.setPeerPublicKey(a_dh.publicKey());
 
-    auto const input1 = std::string{ "test1" };
+    auto constexpr Input1 = "test1"sv;
     auto encrypted1 = std::array<char, 128>{};
     auto decrypted1 = std::array<char, 128>{};
 
-    tr_cryptoEncryptInit(&a);
-    tr_cryptoEncrypt(&a, input1.size(), input1.data(), encrypted1.data());
-    tr_cryptoDecryptInit_(&b);
-    tr_cryptoDecrypt_(&b, input1.size(), encrypted1.data(), decrypted1.data());
-    EXPECT_EQ(input1, std::string(decrypted1.data(), input1.size()));
+    auto a = tr_message_stream_encryption::Filter{};
+    a.encryptInit(false, a_dh, SomeHash);
+    std::copy_n(std::begin(Input1), std::size(Input1), std::begin(encrypted1));
+    a.encrypt(std::size(Input1), std::data(encrypted1));
+    auto b = tr_message_stream_encryption::Filter{};
+    b.decryptInit(true, b_dh, SomeHash);
+    std::copy_n(std::begin(encrypted1), std::size(Input1), std::begin(decrypted1));
+    b.decrypt(std::size(Input1), std::data(decrypted1));
+    EXPECT_EQ(Input1, std::data(decrypted1)) << "Input1 " << Input1 << " decrypted1 " << std::data(decrypted1);
 
-    auto const input2 = std::string{ "@#)C$@)#(*%bvkdjfhwbc039bc4603756VB3)" };
+    auto constexpr Input2 = "@#)C$@)#(*%bvkdjfhwbc039bc4603756VB3)"sv;
     auto encrypted2 = std::array<char, 128>{};
     auto decrypted2 = std::array<char, 128>{};
 
-    tr_cryptoEncryptInit_(&b);
-    tr_cryptoEncrypt_(&b, input2.size(), input2.data(), encrypted2.data());
-    tr_cryptoDecryptInit(&a);
-    tr_cryptoDecrypt(&a, input2.size(), encrypted2.data(), decrypted2.data());
-    EXPECT_EQ(input2, std::string(decrypted2.data(), input2.size()));
+    b.encryptInit(true, b_dh, SomeHash);
+    std::copy_n(std::begin(Input2), std::size(Input2), std::begin(encrypted2));
+    b.encrypt(std::size(Input2), std::data(encrypted2));
+    a.decryptInit(false, a_dh, SomeHash);
+    std::copy_n(std::begin(encrypted2), std::size(Input2), std::begin(decrypted2));
+    a.decrypt(std::size(Input2), std::data(decrypted2));
+    EXPECT_EQ(Input2, std::data(decrypted2)) << "Input2 " << Input2 << " decrypted2 " << std::data(decrypted2);
 }
 
 TEST(Crypto, sha1)
 {
-    auto hash1 = tr_sha1("test"sv);
-    EXPECT_TRUE(hash1);
+    auto hash1 = tr_sha1::digest("test"sv);
     EXPECT_EQ(
         0,
         memcmp(
-            std::data(*hash1),
+            std::data(hash1),
             "\xa9\x4a\x8f\xe5\xcc\xb1\x9b\xa6\x1c\x4c\x08\x73\xd3\x91\xe9\x87\x98\x2f\xbb\xd3",
-            std::size(*hash1)));
+            std::size(hash1)));
 
-    auto hash2 = tr_sha1("test"sv);
-    EXPECT_TRUE(hash1);
-    EXPECT_EQ(*hash1, *hash2);
+    auto hash2 = tr_sha1::digest("test"sv);
+    EXPECT_EQ(hash1, hash2);
 
-    hash1 = tr_sha1("1"sv, "22"sv, "333"sv);
-    hash2 = tr_sha1("1"sv, "22"sv, "333"sv);
-    EXPECT_TRUE(hash1);
-    EXPECT_TRUE(hash2);
-    EXPECT_EQ(*hash1, *hash2);
+    hash1 = tr_sha1::digest("1"sv, "22"sv, "333"sv);
+    hash2 = tr_sha1::digest("1"sv, "22"sv, "333"sv);
+    EXPECT_EQ(hash1, hash2);
     EXPECT_EQ(
         0,
         memcmp(
-            std::data(*hash1),
+            std::data(hash1),
             "\x1f\x74\x64\x8e\x50\xa6\xa6\x70\x8e\xc5\x4a\xb3\x27\xa1\x63\xd5\x53\x6b\x7c\xed",
-            std::size(*hash1)));
+            std::size(hash1)));
 
-    auto const hash3 = tr_sha1("test"sv);
-    EXPECT_TRUE(hash3);
-    EXPECT_EQ("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"sv, tr_sha1_to_string(*hash3));
+    auto const hash3 = tr_sha1::digest("test"sv);
+    EXPECT_EQ("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"sv, tr_sha1_to_string(hash3));
 
-    auto const hash4 = tr_sha1("te"sv, "st"sv);
-    EXPECT_TRUE(hash4);
-    EXPECT_EQ("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"sv, tr_sha1_to_string(*hash4));
+    auto const hash4 = tr_sha1::digest("te"sv, "st"sv);
+    EXPECT_EQ("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"sv, tr_sha1_to_string(hash4));
 
-    auto const hash5 = tr_sha1("t"sv, "e"sv, std::string{ "s" }, std::array<char, 1>{ { 't' } });
-    EXPECT_TRUE(hash5);
-    EXPECT_EQ("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"sv, tr_sha1_to_string(*hash5));
+    auto const hash5 = tr_sha1::digest("t"sv, "e"sv, std::string{ "s" }, std::array<char, 1>{ { 't' } });
+    EXPECT_EQ("a94a8fe5ccb19ba61c4c0873d391e987982fbbd3"sv, tr_sha1_to_string(hash5));
 }
 
 TEST(Crypto, ssha1)
@@ -195,6 +211,30 @@ TEST(Crypto, sha1FromString)
 
     // uppercase hex should yield the same result
     auto const uc = tr_sha1_from_string(tr_strupper(baseline));
+    EXPECT_TRUE(uc);
+    EXPECT_EQ(*lc, *uc);
+}
+
+TEST(Crypto, sha256FromString)
+{
+    // bad lengths
+    EXPECT_FALSE(tr_sha256_from_string(""));
+    EXPECT_FALSE(tr_sha256_from_string("a94a8fe5ccb19ba61c4c0873d391e987982fbbd"sv));
+    EXPECT_FALSE(tr_sha256_from_string("a94a8fe5ccb19ba61c4c0873d391e987982fbbd33"sv));
+    EXPECT_FALSE(tr_sha256_from_string("05d58dfd14ed21d33add137eb7a2c5d4ef5aaa4a945e654363d32b7c4bf5c92"sv));
+    EXPECT_FALSE(tr_sha256_from_string("05d58dfd14ed21d33add137eb7a2c5d4ef5aaa4a945e654363d32b7c4bf5c9299"sv));
+    // nonhex
+    EXPECT_FALSE(tr_sha256_from_string("a94a8fe5ccb19ba61c4cz873d391e987982fbbd3aaaaaaaaaaaaaaaaaaaaaaa"sv));
+    EXPECT_FALSE(tr_sha256_from_string("05  8dfd14ed21d33add137eb7a2c5d4ef5aaa4a945e654363d32b7c4bf5c92"sv));
+
+    // lowercase hex
+    auto const baseline = "05d58dfd14ed21d33add137eb7a2c5d4ef5aaa4a945e654363d32b7c4bf5c929"sv;
+    auto const lc = tr_sha256_from_string(baseline);
+    EXPECT_TRUE(lc);
+    EXPECT_EQ(baseline, tr_sha256_to_string(*lc));
+
+    // uppercase hex should yield the same result
+    auto const uc = tr_sha256_from_string(tr_strupper(baseline));
     EXPECT_TRUE(uc);
     EXPECT_EQ(*lc, *uc);
 }

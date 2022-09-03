@@ -3,11 +3,13 @@
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
+#include <array>
 #include <cerrno>
 #include <future>
 #include <mutex>
-#include <string_view>
+#include <string>
 #include <thread>
+#include <utility>
 
 #include <fmt/core.h>
 
@@ -40,7 +42,7 @@ enum class UpnpState
     WILL_UNMAP // next action is UPNP_DeletePortMapping()
 };
 
-tr_port_forwarding portFwdState(UpnpState upnp_state, bool is_mapped)
+constexpr tr_port_forwarding portFwdState(UpnpState upnp_state, bool is_mapped)
 {
     switch (upnp_state)
     {
@@ -66,6 +68,12 @@ tr_port_forwarding portFwdState(UpnpState upnp_state, bool is_mapped)
 
 struct tr_upnp
 {
+    tr_upnp() = default;
+    tr_upnp(tr_upnp&&) = delete;
+    tr_upnp(tr_upnp const&) = delete;
+    tr_upnp& operator=(tr_upnp&&) = delete;
+    tr_upnp& operator=(tr_upnp const&) = delete;
+
     ~tr_upnp()
     {
         TR_ASSERT(!isMapped);
@@ -80,7 +88,7 @@ struct tr_upnp
     UPNPUrls urls = {};
     IGDdatas data = {};
     tr_port port;
-    char lanaddr[16] = {};
+    std::string lanaddr;
     bool isMapped = false;
     UpnpState state = UpnpState::WILL_DISCOVER;
 
@@ -138,11 +146,8 @@ static struct UPNPDev* tr_upnpDiscover(int msec, char const* bindaddr)
 
 static int tr_upnpGetSpecificPortMappingEntry(tr_upnp* handle, char const* proto)
 {
-    char intClient[16];
-    char intPort[16];
-
-    *intClient = '\0';
-    *intPort = '\0';
+    auto int_client = std::array<char, 16>{};
+    auto int_port = std::array<char, 16>{};
 
     auto const port_str = fmt::format(FMT_STRING("{:d}"), handle->port.host());
 
@@ -153,8 +158,8 @@ static int tr_upnpGetSpecificPortMappingEntry(tr_upnp* handle, char const* proto
         port_str.c_str(),
         proto,
         nullptr /*remoteHost*/,
-        intClient,
-        intPort,
+        std::data(int_client),
+        std::data(int_port),
         nullptr /*desc*/,
         nullptr /*enabled*/,
         nullptr /*duration*/);
@@ -164,8 +169,8 @@ static int tr_upnpGetSpecificPortMappingEntry(tr_upnp* handle, char const* proto
         handle->data.first.servicetype,
         port_str.c_str(),
         proto,
-        intClient,
-        intPort,
+        std::data(int_client),
+        std::data(int_port),
         nullptr /*desc*/,
         nullptr /*enabled*/,
         nullptr /*duration*/);
@@ -175,8 +180,8 @@ static int tr_upnpGetSpecificPortMappingEntry(tr_upnp* handle, char const* proto
         handle->data.first.servicetype,
         port_str.c_str(),
         proto,
-        intClient,
-        intPort);
+        std::data(int_client),
+        std::data(int_port));
 #endif
 
     return err;
@@ -190,23 +195,23 @@ static int tr_upnpAddPortMapping(tr_upnp const* handle, char const* proto, tr_po
     auto const port_str = fmt::format(FMT_STRING("{:d}"), port.host());
 
 #if (MINIUPNPC_API_VERSION >= 8)
-    int err = UPNP_AddPortMapping(
+    int const err = UPNP_AddPortMapping(
         handle->urls.controlURL,
         handle->data.first.servicetype,
         port_str.c_str(),
         port_str.c_str(),
-        handle->lanaddr,
+        handle->lanaddr.c_str(),
         desc,
         proto,
         nullptr,
         nullptr);
 #else
-    int err = UPNP_AddPortMapping(
+    int const err = UPNP_AddPortMapping(
         handle->urls.controlURL,
         handle->data.first.servicetype,
         port_str.c_str(),
         port_str.c_str(),
-        handle->lanaddr,
+        handle->lanaddr.c_str(),
         desc,
         proto,
         nullptr);
@@ -240,11 +245,9 @@ enum
     UPNP_IGD_INVALID = 3
 };
 
-static auto* discoverThreadfunc(char* bindaddr)
+static auto* discoverThreadfunc(std::string bindaddr) // NOLINT performance-unnecessary-value-param
 {
-    auto* const ret = tr_upnpDiscover(2000, bindaddr);
-    tr_free(bindaddr);
-    return ret;
+    return tr_upnpDiscover(2000, bindaddr.c_str());
 }
 
 template<typename T>
@@ -253,17 +256,17 @@ static bool isFutureReady(std::future<T> const& future)
     return future.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
 }
 
-tr_port_forwarding tr_upnpPulse(tr_upnp* handle, tr_port port, bool isEnabled, bool doPortCheck, char const* bindaddr)
+tr_port_forwarding tr_upnpPulse(tr_upnp* handle, tr_port port, bool isEnabled, bool doPortCheck, std::string bindaddr)
 {
     if (isEnabled && handle->state == UpnpState::WILL_DISCOVER)
     {
         TR_ASSERT(!handle->discover_future);
 
-        auto task = std::packaged_task<UPNPDev*(char*)>{ discoverThreadfunc };
+        auto task = std::packaged_task<UPNPDev*(std::string)>{ discoverThreadfunc };
         handle->discover_future = task.get_future();
         handle->state = UpnpState::DISCOVERING;
 
-        std::thread(std::move(task), tr_strdup(bindaddr)).detach();
+        std::thread(std::move(task), std::move(bindaddr)).detach();
     }
 
     if (isEnabled && handle->state == UpnpState::DISCOVERING && handle->discover_future &&
@@ -273,13 +276,15 @@ tr_port_forwarding tr_upnpPulse(tr_upnp* handle, tr_port port, bool isEnabled, b
         handle->discover_future.reset();
 
         FreeUPNPUrls(&handle->urls);
-        if (UPNP_GetValidIGD(devlist, &handle->urls, &handle->data, handle->lanaddr, sizeof(handle->lanaddr)) ==
+        auto lanaddr = std::array<char, TR_ADDRSTRLEN>{};
+        if (UPNP_GetValidIGD(devlist, &handle->urls, &handle->data, std::data(lanaddr), std::size(lanaddr)) ==
             UPNP_IGD_VALID_CONNECTED)
         {
             tr_logAddInfo(fmt::format(_("Found Internet Gateway Device '{url}'"), fmt::arg("url", handle->urls.controlURL)));
-            tr_logAddInfo(fmt::format(_("Local Address is '{address}'"), fmt::arg("address", handle->lanaddr)));
+            tr_logAddInfo(fmt::format(_("Local Address is '{address}'"), fmt::arg("address", std::data(handle->lanaddr))));
             handle->state = UpnpState::IDLE;
             handle->hasDiscovered = true;
+            handle->lanaddr = std::data(lanaddr);
         }
         else
         {

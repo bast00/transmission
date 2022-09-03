@@ -1,5 +1,5 @@
 // This file Copyright © 2008-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -8,7 +8,9 @@
 #include <cstddef>
 #include <ctime>
 #include <functional>
+#include <list>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <sys/types.h>
@@ -21,6 +23,8 @@
 
 #include <libtransmission/transmission.h>
 #include <libtransmission/tr-macros.h>
+
+#include "Session.h"
 
 extern int const mem_K;
 extern char const* const mem_K_str;
@@ -128,6 +132,14 @@ inline T gtr_str_strip(T const& text)
 }
 
 std::string gtr_get_full_resource_path(std::string const& rel_path);
+
+/***
+****
+***/
+
+extern size_t const max_recent_dirs;
+std::list<std::string> gtr_get_recent_dirs(std::string const& pref);
+void gtr_save_recent_dir(std::string const& pref, Glib::RefPtr<Session> const& core, std::string const& dir);
 
 namespace gtr_detail
 {

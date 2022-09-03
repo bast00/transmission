@@ -67,11 +67,11 @@
     self.window.title = NSLocalizedString(@"Message Log", "Message window -> title");
 
     //disable fullscreen support
-    [window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenNone];
+    window.collectionBehavior = NSWindowCollectionBehaviorFullScreenNone;
 
     //set images and text for popup button items
     [self.fLevelButton itemAtIndex:LEVEL_ERROR].title = NSLocalizedString(@"Error", "Message window -> level string");
-    [self.fLevelButton itemAtIndex:LEVEL_WARN].title = NSLocalizedString(@"Warn", "Message window -> level string");
+    [self.fLevelButton itemAtIndex:LEVEL_WARN].title = NSLocalizedString(@"Warning", "Message window -> level string");
     [self.fLevelButton itemAtIndex:LEVEL_INFO].title = NSLocalizedString(@"Info", "Message window -> level string");
     [self.fLevelButton itemAtIndex:LEVEL_DEBUG].title = NSLocalizedString(@"Debug", "Message window -> level string");
     [self.fLevelButton itemAtIndex:LEVEL_TRACE].title = NSLocalizedString(@"Trace", "Message window -> level string");
@@ -252,12 +252,13 @@
 
     for (tr_log_message* currentMessage = messages; currentMessage != NULL; currentMessage = currentMessage->next)
     {
-        NSString* name = currentMessage->name != NULL ? @(currentMessage->name) : NSProcessInfo.processInfo.processName;
+        NSString* name = !std::empty(currentMessage->name) ? @(currentMessage->name.c_str()) : NSProcessInfo.processInfo.processName;
 
-        NSString* file = [(@(currentMessage->file)).lastPathComponent stringByAppendingFormat:@":%d", currentMessage->line];
+        auto const file_string = std::string{ currentMessage->file };
+        NSString* file = [(@(file_string.c_str())).lastPathComponent stringByAppendingFormat:@":%d", currentMessage->line];
 
         NSDictionary* message = @{
-            @"Message" : @(currentMessage->message),
+            @"Message" : @(currentMessage->message.c_str()),
             @"Date" : [NSDate dateWithTimeIntervalSince1970:currentMessage->when],
             @"Index" : @(currentIndex++), //more accurate when sorting by date
             @"Level" : @(currentMessage->level),
@@ -582,7 +583,7 @@
         levelString = NSLocalizedString(@"Error", "Message window -> level");
         break;
     case TR_LOG_WARN:
-        levelString = NSLocalizedString(@"Warn", "Message window -> level");
+        levelString = NSLocalizedString(@"Warning", "Message window -> level");
         break;
     case TR_LOG_INFO:
         levelString = NSLocalizedString(@"Info", "Message window -> level");

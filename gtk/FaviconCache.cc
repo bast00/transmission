@@ -4,6 +4,7 @@
 // License text can be found in the licenses/ folder.
 
 #include <array>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -68,7 +69,7 @@ Glib::RefPtr<Gdk::Pixbuf> favicon_load_from_cache(std::string const& host)
     }
     catch (Glib::Error const&)
     {
-        g_remove(filename.c_str());
+        (void)g_remove(filename.c_str());
         return {};
     }
 }

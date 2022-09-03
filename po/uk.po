@@ -4,20 +4,21 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 # Translators:
-# Denis <prohibiti@gmail.com>, 2018
+# Denis <prohibiti@gmail.com>, 2017
 # Mike Gelfand <mikedld@mikedld.com>, 2018
 # f6d3887df5c5bcb13fc1d4fb04e37f17, 2018
 # Yevhenii Shatalov <zhenya.shot@gmail.com>, 2021
 # Vlad Anisimov <uniss@ua.fm>, 2022
+# Olexander Movchan, 2022
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-18 18:42+0100\n"
+"POT-Creation-Date: 2022-07-24 17:27+0100\n"
 "PO-Revision-Date: 2017-01-26 19:47+0000\n"
-"Last-Translator: Vlad Anisimov <uniss@ua.fm>, 2022\n"
+"Last-Translator: Olexander Movchan, 2022\n"
 "Language-Team: Ukrainian (https://www.transifex.com/transmissionbt/teams/33778/uk/)\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
@@ -27,79 +28,79 @@ msgstr ""
 
 #: ../cli/cli.cc:105 ../gtk/Utils.cc:86 ../libtransmission/utils.cc:935
 msgid "None"
-msgstr "Нічого"
+msgstr "Немає"
 
 #: ../cli/cli.cc:110
 msgid "Inf"
-msgstr ""
+msgstr "∞"
 
-#: ../daemon/daemon.cc:257 ../gtk/MakeDialog.cc:135 ../gtk/Session.cc:1135 ../libtransmission/blocklist.cc:61 ../libtransmission/blocklist.cc:73 ../libtransmission/blocklist.cc:281 ../libtransmission/blocklist.cc:299 ../libtransmission/inout.cc:165 ../libtransmission/utils.cc:155 ../libtransmission/utils.cc:181 ../libtransmission/utils.cc:193 ../libtransmission/utils.cc:219 ../libtransmission/utils.cc:239 ../libtransmission/utils.cc:251 ../libtransmission/watchdir.cc:195 ../libtransmission/watchdir.cc:228
+#: ../daemon/daemon.cc:257 ../gtk/MakeDialog.cc:135 ../gtk/Session.cc:1136 ../libtransmission/blocklist.cc:61 ../libtransmission/blocklist.cc:73 ../libtransmission/blocklist.cc:281 ../libtransmission/blocklist.cc:299 ../libtransmission/inout.cc:165 ../libtransmission/utils.cc:155 ../libtransmission/utils.cc:181 ../libtransmission/utils.cc:193 ../libtransmission/utils.cc:219 ../libtransmission/utils.cc:239 ../libtransmission/utils.cc:251 ../libtransmission/watchdir.cc:195 ../libtransmission/watchdir.cc:228
 msgid "Couldn't read '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося прочитати «{path}»: {error} ({error_code})"
 
-#: ../daemon/daemon.cc:283 ../gtk/Session.cc:1187 ../gtk/Utils.cc:255 ../libtransmission/watchdir.cc:332
+#: ../daemon/daemon.cc:283 ../gtk/Session.cc:1188 ../gtk/Utils.cc:255 ../libtransmission/watchdir.cc:332
 msgid "Couldn't add torrent file '{path}'"
-msgstr ""
+msgstr "Не вдалося додати torrent-файл «{path}»"
 
 #: ../daemon/daemon.cc:294
 msgid "Removing torrent file '{path}'"
-msgstr ""
+msgstr "Видалення torrent-файлу «{path}»"
 
 #: ../daemon/daemon.cc:299 ../libtransmission/utils.cc:995
 msgid "Couldn't remove '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося видалити «{path}»: {error} ({error_code})"
 
 #: ../daemon/daemon.cc:631
 msgid "Couldn't parse log level '{level}'"
-msgstr ""
+msgstr "Не вдалося розпізнати рівень журналювання «{level}»"
 
 #: ../daemon/daemon.cc:679
 msgid "Deferring reload until session is fully started."
-msgstr ""
+msgstr "Відкладення перезапуску до повного старту сесії."
 
 #: ../daemon/daemon.cc:694
 msgid "Reloading settings from '{path}'"
-msgstr ""
+msgstr "Перезавантаження налаштувань з «{path}»"
 
 #: ../daemon/daemon.cc:733
 msgid "Couldn't initialize daemon: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося ініціалізувати демон {error} ({error_code})"
 
 #: ../daemon/daemon.cc:746
 msgid "Loading settings from '{path}'"
-msgstr ""
+msgstr "Завантаження налаштувань з «{path}»"
 
 #: ../daemon/daemon.cc:766
 msgid "Saved pidfile '{path}'"
-msgstr ""
+msgstr "Збережено pid-файл «{path}»"
 
-#: ../daemon/daemon.cc:772 ../gtk/MakeDialog.cc:143 ../gtk/MessageLogWindow.cc:190 ../libtransmission/blocklist.cc:356 ../libtransmission/inout.cc:181 ../libtransmission/rpcimpl.cc:1452 ../libtransmission/torrent.cc:813 ../libtransmission/torrent.cc:2097 ../libtransmission/variant.cc:1137
+#: ../daemon/daemon.cc:772 ../gtk/MakeDialog.cc:143 ../gtk/MessageLogWindow.cc:190 ../libtransmission/blocklist.cc:356 ../libtransmission/inout.cc:181 ../libtransmission/rpcimpl.cc:1453 ../libtransmission/torrent.cc:825 ../libtransmission/torrent.cc:2041 ../libtransmission/variant.cc:1137
 msgid "Couldn't save '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося зберегти «{path}»: {error} ({error_code})"
 
 #: ../daemon/daemon.cc:782
 msgid "Requiring authentication"
-msgstr ""
+msgstr "Необхідна автентифікація"
 
 #: ../daemon/daemon.cc:803
 msgid "Watching '{path}' for new torrent files"
-msgstr ""
+msgstr "Спостереження за новими торент-файлами в «{path}»"
 
 #: ../daemon/daemon.cc:846 ../libtransmission/watchdir-generic.cc:83 ../libtransmission/watchdir-kqueue.cc:163 ../libtransmission/watchdir-win32.cc:331
 msgid "Couldn't create event: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося створити подію: {error} ({error_code})"
 
 #: ../daemon/daemon.cc:856 ../libtransmission/watchdir-generic.cc:93 ../libtransmission/watchdir-kqueue.cc:173
 msgid "Couldn't add event: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося додати подію: {error} ({error_code})"
 
 #: ../daemon/daemon.cc:870
 msgid "Couldn't launch daemon event loop: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося запустити цикл подій демона: {error} ({error_code})"
 
 #: ../gtk/Application.cc:352
 msgid "Couldn't register Transmission as a {content_type} handler: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося зареєструвати Transmission як обробник {content_type}: {error} ({error_code})"
 
 #: ../gtk/Application.cc:511
 #, c-format
@@ -121,7 +122,7 @@ msgstr "Я _погоджуюсь"
 
 #: ../gtk/Application.cc:900
 msgid "Closing Connections…"
-msgstr ""
+msgstr "Закриття Зʼєднань…"
 
 #: ../gtk/Application.cc:905
 msgid "Sending upload/download totals to tracker…"
@@ -196,11 +197,11 @@ msgstr "Зважати на за_гальні обмеження"
 
 #: ../gtk/DetailsDialog.cc:472
 msgid "Limit _download speed ({speed_units}):"
-msgstr ""
+msgstr "Обмежити швидкість _завантаження ({speed_units}):"
 
 #: ../gtk/DetailsDialog.cc:484
 msgid "Limit _upload speed ({speed_units}):"
-msgstr ""
+msgstr "Обмежити швидкість _вивантаження ({speed_units}):"
 
 #: ../gtk/DetailsDialog.cc:497 ../gtk/OptionsDialog.cc:360
 msgid "Torrent _priority:"
@@ -302,57 +303,57 @@ msgstr "Публічний торент"
 
 #: ../gtk/DetailsDialog.cc:712
 msgid "Created by {creator} on {date}"
-msgstr ""
+msgstr "Створено {creator} {date}"
 
 #: ../gtk/DetailsDialog.cc:716
 msgid "Created by {creator}"
-msgstr ""
+msgstr "Створено {creator}"
 
 #: ../gtk/DetailsDialog.cc:720
 msgid "Created on {date}"
-msgstr ""
+msgstr "Створено {date}"
 
 #: ../gtk/DetailsDialog.cc:834
 msgid "Unknown"
 msgstr "Невідомо"
 
-#: ../gtk/DetailsDialog.cc:871 ../gtk/MakeDialog.cc:355
+#: ../gtk/DetailsDialog.cc:871 ../gtk/MakeDialog.cc:356
 msgid "{total_size} in {file_count:L} file"
 msgid_plural "{total_size} in {file_count:L} files"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "{total_size} у {file_count:L} файлі"
+msgstr[1] "{total_size} у {file_count:L} файлах"
+msgstr[2] "{total_size} у {file_count:L} файлах"
+msgstr[3] "{total_size} у {file_count:L} файлах"
 
-#: ../gtk/DetailsDialog.cc:886 ../gtk/MakeDialog.cc:361
+#: ../gtk/DetailsDialog.cc:886 ../gtk/MakeDialog.cc:362
 msgid "({piece_count} BitTorrent piece @ {piece_size})"
 msgid_plural "({piece_count} BitTorrent pieces @ {piece_size})"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "({piece_count} BitTorrent частина розміром {piece_size})"
+msgstr[1] "({piece_count} BitTorrent частини розміром {piece_size})"
+msgstr[2] "({piece_count} BitTorrent частин розміром {piece_size})"
+msgstr[3] "({piece_count} BitTorrent частини розміром {piece_size})"
 
 #: ../gtk/DetailsDialog.cc:930
 msgid "{current_size} ({percent_done}%)"
-msgstr ""
+msgstr "{current_size} ({percent_done}%)"
 
 #: ../gtk/DetailsDialog.cc:938
 #, no-c-format
 msgid "{current_size} ({percent_done}% of {percent_available}% available)"
-msgstr ""
+msgstr "{current_size} ({percent_done}% з доступних {percent_available}%)"
 
 #: ../gtk/DetailsDialog.cc:947
 #, no-c-format
 msgid "{current_size} ({percent_done}% of {percent_available}% available; {unverified_size} unverified)"
-msgstr ""
+msgstr "{current_size} ({percent_done}% з доступних {percent_available}%; {unverified_size} не верифіковано)"
 
 #: ../gtk/DetailsDialog.cc:980
 msgid "{downloaded_size} (+{discarded_size} discarded after failed checksum)"
-msgstr ""
+msgstr "{downloaded_size} (+{discarded_size} відкинуто через неправильну контрольну суму)"
 
 #: ../gtk/DetailsDialog.cc:1010
 msgid "{uploaded_size} (Ratio: {ratio})"
-msgstr ""
+msgstr "{uploaded_size} (Співвідношення: {ratio})"
 
 #: ../gtk/DetailsDialog.cc:1051
 msgid "No errors"
@@ -428,7 +429,7 @@ msgstr "Походження:"
 
 #: ../gtk/DetailsDialog.cc:1171
 msgid "Added:"
-msgstr ""
+msgstr "Додано:"
 
 #: ../gtk/DetailsDialog.cc:1185
 msgid "Comment:"
@@ -542,20 +543,20 @@ msgstr "_Докладніше"
 #: ../gtk/DetailsDialog.cc:1922
 msgid "Got a list of {markup_begin}{peer_count} peer{markup_end} {time_span_ago}"
 msgid_plural "Got a list of {markup_begin}{peer_count} peers{markup_end} {time_span_ago}"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Отримано список з {markup_begin}{peer_count} вузла{markup_end} {time_span_ago}"
+msgstr[1] "Отримано список з {markup_begin}{peer_count} вузлів{markup_end} {time_span_ago}"
+msgstr[2] "Отримано список з {markup_begin}{peer_count} вузлів{markup_end} {time_span_ago}"
+msgstr[3] "Отримано список з {markup_begin}{peer_count} вузлів{markup_end} {time_span_ago}"
 
 #. {markup_begin} and {markup_end} should surround the time_span
 #: ../gtk/DetailsDialog.cc:1934
 msgid "Peer list request {markup_begin}timed out {time_span_ago}{markup_end}; will retry"
-msgstr ""
+msgstr "Запит списку вузлів {markup_begin}вичерпав час {time_span_ago}{markup_end}; буде надіслано повторно"
 
 #. {markup_begin} and {markup_end} should surround the error
 #: ../gtk/DetailsDialog.cc:1943
 msgid "Got an error '{markup_begin}{error}{markup_end}' {time_span_ago}"
-msgstr ""
+msgstr "Виникла помилка «{markup_begin}{error}{markup_end}» {time_span_ago}"
 
 #: ../gtk/DetailsDialog.cc:1956
 msgid "No updates scheduled"
@@ -563,7 +564,7 @@ msgstr "Жодних оновлень не заплановано"
 
 #: ../gtk/DetailsDialog.cc:1963
 msgid "Asking for more peers {time_span_from_now}"
-msgstr ""
+msgstr "Запит додаткових вузлів {time_span_from_now}"
 
 #: ../gtk/DetailsDialog.cc:1970
 msgid "Queued to ask for more peers"
@@ -572,28 +573,28 @@ msgstr "У черзі на перевірку нових вузлів"
 #. {markup_begin} and {markup_end} should surround time_span_ago
 #: ../gtk/DetailsDialog.cc:1978
 msgid "Asked for more peers {markup_begin}{time_span_ago}{markup_end}"
-msgstr ""
+msgstr "Запитано додаткові вузли {markup_begin}{time_span_ago}{markup_end}"
 
 #. {markup_begin} and {markup_end} should surround the seeder/leecher text
 #: ../gtk/DetailsDialog.cc:2001
 msgid "Tracker had {markup_begin}{seeder_count} {seeder_or_seeders} and {leecher_count} {leecher_or_leechers}{markup_end} {time_span_ago}"
-msgstr ""
+msgstr "Трекер мав {markup_begin}{seeder_count} {seeder_or_seeders} і {leecher_count} {leecher_or_leechers}{markup_end} {time_span_ago}"
 
 #: ../gtk/DetailsDialog.cc:2003
 msgid "seeder"
 msgid_plural "seeders"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "роздаючий"
+msgstr[1] "роздаючих"
+msgstr[2] "роздаючих"
+msgstr[3] "роздаючих"
 
 #: ../gtk/DetailsDialog.cc:2005
 msgid "leecher"
 msgid_plural "leechers"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "завантажуючий"
+msgstr[1] "завантажуючих"
+msgstr[2] "завантажуючих"
+msgstr[3] "завантажуючих"
 
 #. {markup_begin} and {markup_end} should surround the error text
 #: ../gtk/DetailsDialog.cc:2014
@@ -622,7 +623,7 @@ msgstr "Будь ласка, виправте помилки і повторіт
 
 #: ../gtk/DetailsDialog.cc:2325
 msgid "{torrent_name} - Edit Trackers"
-msgstr ""
+msgstr "{torrent_name} - Редагувати Трекери"
 
 #: ../gtk/DetailsDialog.cc:2329 ../gtk/MessageLogWindow.cc:238
 msgid "_Save"
@@ -632,7 +633,7 @@ msgstr "_Зберегти"
 msgid "Tracker Announce URLs"
 msgstr "Посилання на повідомлення трекерів"
 
-#: ../gtk/DetailsDialog.cc:2338 ../gtk/MakeDialog.cc:524
+#: ../gtk/DetailsDialog.cc:2338 ../gtk/MakeDialog.cc:525
 msgid ""
 "To add a backup URL, add it on the next line after a primary URL.\n"
 "To add a new primary URL, add it after a blank line."
@@ -646,7 +647,7 @@ msgstr "Також перегляньте Загальнодоступні тр�
 
 #: ../gtk/DetailsDialog.cc:2435
 msgid "{torrent_name} - Add Tracker"
-msgstr ""
+msgstr "{torrent_name} - Додати Трекер"
 
 #: ../gtk/DetailsDialog.cc:2439 ../gtk/DetailsDialog.cc:2542 ../gtk/MakeDialog.cc:226 ../gtk/PrefsDialog.cc:771
 msgid "_Add"
@@ -677,7 +678,7 @@ msgid "Show _backup trackers"
 msgstr "Показати резервні трекери"
 
 #. create the dialog
-#: ../gtk/DetailsDialog.cc:2623 ../gtk/MakeDialog.cc:225 ../gtk/MakeDialog.cc:467 ../gtk/PrefsDialog.cc:1176 ../gtk/StatsDialog.cc:143
+#: ../gtk/DetailsDialog.cc:2623 ../gtk/MakeDialog.cc:225 ../gtk/MakeDialog.cc:468 ../gtk/PrefsDialog.cc:1176 ../gtk/StatsDialog.cc:143
 msgid "_Close"
 msgstr "_Закрити"
 
@@ -693,7 +694,7 @@ msgstr "Піри"
 msgid "File listing not available for combined torrent properties"
 msgstr "У зведених даних торенту перелік файлів не вказано"
 
-#: ../gtk/DetailsDialog.cc:2646 ../gtk/MakeDialog.cc:473
+#: ../gtk/DetailsDialog.cc:2646 ../gtk/MakeDialog.cc:474
 msgid "Files"
 msgstr "Файли"
 
@@ -703,15 +704,15 @@ msgstr "Параметри"
 
 #: ../gtk/DetailsDialog.cc:2675
 msgid "{torrent_name} Properties"
-msgstr ""
+msgstr "Властивості {torrent_name}"
 
 #: ../gtk/DetailsDialog.cc:2684
 msgid "Properties - {torrent_count:L} Torrent"
 msgid_plural "Properties - {torrent_count:L} Torrents"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Властивості — {torrent_count:L} торент"
+msgstr[1] "Властивості — {torrent_count:L} торенти"
+msgstr[2] "Властивості — {torrent_count:L} торентів"
+msgstr[3] "Властивості — {torrent_count:L} торенти"
 
 #: ../gtk/Dialogs.cc:54
 #, c-format
@@ -789,7 +790,7 @@ msgstr "Низький"
 
 #: ../gtk/FileList.cc:767 ../gtk/Session.cc:621
 msgid "Couldn't rename '{old_path}' as '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося перейменувати «{old_path}» як «{path}»: {error} ({error_code})"
 
 #: ../gtk/FileList.cc:865 ../gtk/MessageLogWindow.cc:305
 msgid "Name"
@@ -837,11 +838,11 @@ msgstr "Пок_азувати:"
 
 #: ../gtk/FilterBar.cc:716
 msgid "_Show {count:L} of:"
-msgstr ""
+msgstr "_Показати {count:L} з:"
 
 #: ../gtk/FreeSpaceLabel.cc:51
 msgid "{disk_space} free"
-msgstr ""
+msgstr "{disk_space} доступно"
 
 #: ../gtk/MainWindow.cc:131
 msgid "Torrent"
@@ -852,12 +853,16 @@ msgid ""
 "Click to disable Alternative Speed Limits\n"
 " ({download_speed} down, {upload_speed} up)"
 msgstr ""
+"Натисніть, щоб вимкнути Альтернативне Обмеження Швидкості\n"
+" ({download_speed} завантаження, {upload_speed} вивантаження)"
 
 #: ../gtk/MainWindow.cc:230
 msgid ""
 "Click to enable Alternative Speed Limits\n"
 " ({download_speed} down, {upload_speed} up)"
 msgstr ""
+"Натисніть, щоб увімкнути Альтернативне Обмеження Швидкості\n"
+" ({download_speed} завантаження, {upload_speed} вивантаження)"
 
 #: ../gtk/MainWindow.cc:272
 msgid "Unlimited"
@@ -881,7 +886,7 @@ msgstr "Припинити поширення за співвідношення"
 
 #: ../gtk/MainWindow.cc:383
 msgid "Stop at Ratio ({ratio})"
-msgstr ""
+msgstr "Зупинити при Співвідношенні ({ratio})"
 
 #: ../gtk/MainWindow.cc:420
 msgid "Total Ratio"
@@ -905,33 +910,33 @@ msgstr "Статистика"
 
 #: ../gtk/MainWindow.cc:591 ../gtk/MainWindow.cc:612 ../gtk/TorrentCellRenderer.cc:180
 msgid "Ratio: {ratio}"
-msgstr ""
+msgstr "Співвідношення: {ratio}"
 
 #: ../gtk/MainWindow.cc:597
 msgctxt "current session totals"
 msgid "Down: {downloaded_size}, Up: {uploaded_size}"
-msgstr ""
+msgstr "Завантажено: {downloaded_size}, Вивантажено: {uploaded_size}"
 
 #: ../gtk/MainWindow.cc:605
 msgctxt "all-time totals"
 msgid "Down: {downloaded_size}, Up: {uploaded_size}"
-msgstr ""
+msgstr "Завантажено: {downloaded_size}, Вивантажено: {uploaded_size}"
 
 #: ../gtk/MainWindow.cc:638
 msgid "{download_speed} ▼"
-msgstr ""
+msgstr "{download_speed} ▼"
 
 #: ../gtk/MainWindow.cc:641 ../gtk/TorrentCellRenderer.cc:138
 msgid "{upload_speed} ▲"
-msgstr ""
+msgstr "{upload_speed} ▲"
 
 #: ../gtk/MakeDialog.cc:118
 msgid "Creating '{path}'"
-msgstr ""
+msgstr "Створення «{path}»"
 
 #: ../gtk/MakeDialog.cc:122
 msgid "Created '{path}'"
-msgstr ""
+msgstr "Створено «{path}»"
 
 #: ../gtk/MakeDialog.cc:126
 msgid "Cancelled"
@@ -939,13 +944,13 @@ msgstr "Скасовано"
 
 #: ../gtk/MakeDialog.cc:130 ../gtk/Utils.cc:543 ../libtransmission/announcer.cc:1209 ../libtransmission/announcer.cc:1441
 msgid "Unsupported URL: '{url}'"
-msgstr ""
+msgstr "URL не підтримується: «{url}»"
 
 #: ../gtk/MakeDialog.cc:164
 msgid "Scanned {file_size}"
-msgstr ""
+msgstr "Проскановано {file_size}"
 
-#: ../gtk/MakeDialog.cc:219 ../gtk/MakeDialog.cc:454
+#: ../gtk/MakeDialog.cc:219 ../gtk/MakeDialog.cc:455
 msgid "New Torrent"
 msgstr "Новий торент"
 
@@ -953,47 +958,47 @@ msgstr "Новий торент"
 msgid "Creating torrent…"
 msgstr "Створення торенту…"
 
-#: ../gtk/MakeDialog.cc:349 ../gtk/MakeDialog.cc:499
+#: ../gtk/MakeDialog.cc:350 ../gtk/MakeDialog.cc:500
 msgid "No source selected"
 msgstr "Не вказано джерела"
 
-#: ../gtk/MakeDialog.cc:468
+#: ../gtk/MakeDialog.cc:469
 msgid "_New"
 msgstr "_Новий"
 
-#: ../gtk/MakeDialog.cc:477
+#: ../gtk/MakeDialog.cc:478
 msgid "Sa_ve to:"
 msgstr "З_берегти до:"
 
-#: ../gtk/MakeDialog.cc:481
+#: ../gtk/MakeDialog.cc:482
 msgid "Source F_older:"
 msgstr "Тека з _даними:"
 
-#: ../gtk/MakeDialog.cc:490
+#: ../gtk/MakeDialog.cc:491
 msgid "Source _File:"
 msgstr "_Файл даних:"
 
-#: ../gtk/MakeDialog.cc:506
+#: ../gtk/MakeDialog.cc:507
 msgid "Piece size:"
-msgstr ""
+msgstr "Розмір частини:"
 
-#: ../gtk/MakeDialog.cc:509
+#: ../gtk/MakeDialog.cc:510
 msgid "Properties"
 msgstr "Властивості"
 
-#: ../gtk/MakeDialog.cc:529
+#: ../gtk/MakeDialog.cc:530
 msgid "_Trackers:"
 msgstr "_Трекери:"
 
-#: ../gtk/MakeDialog.cc:531
+#: ../gtk/MakeDialog.cc:532
 msgid "Co_mment:"
 msgstr "Ко_ментар:"
 
-#: ../gtk/MakeDialog.cc:538
+#: ../gtk/MakeDialog.cc:539
 msgid "_Source:"
 msgstr "_Джерело:"
 
-#: ../gtk/MakeDialog.cc:545
+#: ../gtk/MakeDialog.cc:546
 msgid "_Private torrent"
 msgstr "_Приватний торент"
 
@@ -1011,11 +1016,11 @@ msgstr "Час"
 
 #: ../gtk/MessageLogWindow.cc:440
 msgid "Critical"
-msgstr ""
+msgstr "Критично"
 
 #: ../gtk/MessageLogWindow.cc:442
 msgid "Warning"
-msgstr ""
+msgstr "Попередження"
 
 #: ../gtk/MessageLogWindow.cc:444
 msgid "Debug"
@@ -1023,7 +1028,7 @@ msgstr "Діагностика"
 
 #: ../gtk/MessageLogWindow.cc:445
 msgid "Trace"
-msgstr ""
+msgstr "Простежування"
 
 #: ../gtk/MessageLogWindow.cc:447
 msgid "Message Log"
@@ -1083,7 +1088,7 @@ msgstr "_Відкрити"
 
 #: ../gtk/OptionsDialog.cc:295 ../gtk/PrefsDialog.cc:270
 msgid "Mo_ve torrent file to the trash"
-msgstr ""
+msgstr "Вилу_чити торент-файл до смітника"
 
 #: ../gtk/OptionsDialog.cc:296
 msgid "_Start when added"
@@ -1133,7 +1138,7 @@ msgstr "Додавання"
 
 #: ../gtk/PrefsDialog.cc:257
 msgid "Automatically add torrent files _from:"
-msgstr ""
+msgstr "Автоматично додавати торент-файли _з:"
 
 #: ../gtk/PrefsDialog.cc:264
 msgid "Show the Torrent Options _dialog"
@@ -1222,18 +1227,18 @@ msgstr "Відтворити зв_уковий файл після заверш�
 #: ../gtk/PrefsDialog.cc:416 ../gtk/PrefsDialog.cc:444
 msgid "Blocklist has {count:L} entry"
 msgid_plural "Blocklist has {count:L} entries"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "У списку блокування міститься {count:L} запис"
+msgstr[1] "У списку блокування міститься {count:L} записи"
+msgstr[2] "У списку блокування міститься {count:L} записів"
+msgstr[3] "У списку блокування міститься {count:L} записи"
 
 #: ../gtk/PrefsDialog.cc:448
 msgid "Blocklist updated!"
-msgstr ""
+msgstr "Список блокування оновлено!"
 
 #: ../gtk/PrefsDialog.cc:448
 msgid "Couldn't update blocklist"
-msgstr ""
+msgstr "Не вдалося оновити список блокування"
 
 #: ../gtk/PrefsDialog.cc:459
 msgid "Update Blocklist"
@@ -1341,12 +1346,12 @@ msgstr "Обмеження швидкості"
 #. checkbox to limit upload speed
 #: ../gtk/PrefsDialog.cc:892
 msgid "_Upload ({speed_units}):"
-msgstr ""
+msgstr "_Вивантаження ({speed_units}):"
 
 #. checkbox to limit download speed
 #: ../gtk/PrefsDialog.cc:904
 msgid "_Download ({speed_units}):"
-msgstr ""
+msgstr "_Завантаження ({speed_units}):"
 
 #: ../gtk/PrefsDialog.cc:917
 msgid "Alternative Speed Limits"
@@ -1359,12 +1364,12 @@ msgstr "Не дотримуватися обмежень швидкості пр
 #. labels a spinbutton for alternate upload speed limits
 #: ../gtk/PrefsDialog.cc:938
 msgid "U_pload ({speed_units}):"
-msgstr ""
+msgstr "В_ивантаження ({speed_units}):"
 
 #. labels a spinbutton for alternate download speed limits
 #: ../gtk/PrefsDialog.cc:944
 msgid "Do_wnload ({speed_units}):"
-msgstr ""
+msgstr "З_авантаження ({speed_units}):"
 
 #. label goes between two time selectors, e.g. "limit speeds from [time] to [time]"
 #: ../gtk/PrefsDialog.cc:953
@@ -1385,15 +1390,15 @@ msgstr "Невідомий статус"
 
 #: ../gtk/PrefsDialog.cc:1021
 msgid "Port is {markup_begin}closed{markup_end}"
-msgstr ""
+msgstr "Порт {markup_begin}закрито{markup_end}"
 
 #: ../gtk/PrefsDialog.cc:1021
 msgid "Port is {markup_begin}open{markup_end}"
-msgstr ""
+msgstr "Порт {markup_begin}відкрито{markup_end}"
 
 #: ../gtk/PrefsDialog.cc:1032
 msgid "Testing TCP port…"
-msgstr ""
+msgstr "Перевірка TCP-порту"
 
 #: ../gtk/PrefsDialog.cc:1054
 msgid "Listening Port"
@@ -1503,7 +1508,7 @@ msgstr "Віддалений"
 
 #: ../gtk/RelocateDialog.cc:78
 msgid "Moving '{torrent_name}'"
-msgstr ""
+msgstr "Переміщення «{torrent_name}»"
 
 #: ../gtk/RelocateDialog.cc:88
 msgid "Couldn't move torrent"
@@ -1537,31 +1542,31 @@ msgstr "Перенести зі старої теки у вказану"
 msgid "Local data is _already there"
 msgstr "Завантажені дані вже перенесено"
 
-#: ../gtk/Session.cc:1120 ../libtransmission/watchdir-win32.cc:294 ../libtransmission/watchdir-win32.cc:313
+#: ../gtk/Session.cc:1121 ../libtransmission/watchdir-win32.cc:294 ../libtransmission/watchdir-win32.cc:313
 msgid "Couldn't read '{path}'"
-msgstr ""
+msgstr "Не вдалося зчитати «{path}»"
 
 #. logging
-#: ../gtk/Session.cc:1457
+#: ../gtk/Session.cc:1458
 msgid "Inhibiting desktop hibernation"
 msgstr "Відкладаємо присипляння системи"
 
-#: ../gtk/Session.cc:1463 ../gtk/Session.cc:1488
+#: ../gtk/Session.cc:1464 ../gtk/Session.cc:1489
 msgid "Couldn't inhibit desktop hibernation: {error}"
-msgstr ""
+msgstr "Не вдалося стримати гібернацію: {error}"
 
 #. logging
-#: ../gtk/Session.cc:1484
+#: ../gtk/Session.cc:1485
 msgid "Allowing desktop hibernation"
 msgstr "Дозвіл на присипляння"
 
 #: ../gtk/StatsDialog.cc:67
 msgid "Started {count:L} time"
 msgid_plural "Started {count:L} times"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Запущено {count:L} раз"
+msgstr[1] "Запущено {count:L} рази"
+msgstr[2] "Запущено {count:L} разів"
+msgstr[3] "Запущено {count:L} рази"
 
 #: ../gtk/StatsDialog.cc:103
 msgid "Reset your statistics?"
@@ -1593,29 +1598,29 @@ msgstr "Усього"
 
 #: ../gtk/SystemTrayIcon.cc:164
 msgid "{upload_speed} ▲ {download_speed} ▼"
-msgstr ""
+msgstr "{upload_speed} ▲ {download_speed} ▼"
 
 #: ../gtk/TorrentCellRenderer.cc:54
 msgid "{current_size} of {complete_size} ({percent_done}%)"
-msgstr ""
+msgstr "{current_size} з {complete_size} ({percent_done}%)"
 
 #: ../gtk/TorrentCellRenderer.cc:64
 #, no-c-format
 msgid "{current_size} of {complete_size} ({percent_complete}%), uploaded {uploaded_size} (Ratio: {ratio}, Goal: {seed_ratio})"
-msgstr ""
+msgstr "{current_size} з {complete_size} ({percent_complete}%), вивантажено {uploaded_size} (Співвідношення: {ratio}, Мета: {seed_ratio})"
 
 #: ../gtk/TorrentCellRenderer.cc:76
 #, no-c-format
 msgid "{current_size} of {complete_size} ({percent_complete}%), uploaded {uploaded_size} (Ratio: {ratio})"
-msgstr ""
+msgstr "{current_size} з {complete_size} ({percent_complete}%), вивантажено {uploaded_size} (Співвідношення: {ratio})"
 
 #: ../gtk/TorrentCellRenderer.cc:86
 msgid "{complete_size}, uploaded {uploaded_size} (Ratio: {ratio}, Goal: {seed_ratio})"
-msgstr ""
+msgstr "{complete_size}, вивантажено {uploaded_size} (Співвідношення: {ratio}, Мета: {seed_ratio}) "
 
 #: ../gtk/TorrentCellRenderer.cc:95
 msgid "{complete_size}, uploaded {uploaded_size} (Ratio: {ratio})"
-msgstr ""
+msgstr "{complete_size}, вивантажено {uploaded_size} (Співвідношення: {ratio})"
 
 #: ../gtk/TorrentCellRenderer.cc:109
 msgid "Remaining time unknown"
@@ -1623,7 +1628,7 @@ msgstr "Час, що залишився, невідомий"
 
 #: ../gtk/TorrentCellRenderer.cc:131
 msgid "{download_speed} ▼  {upload_speed} ▲"
-msgstr ""
+msgstr "{download_speed} ▼  {upload_speed} ▲"
 
 #: ../gtk/TorrentCellRenderer.cc:143
 msgid "Stalled"
@@ -1634,22 +1639,22 @@ msgstr "Павза зв'язку"
 msgid "Verifying local data ({percent_done}% tested)"
 msgstr ""
 
-#: ../gtk/TorrentCellRenderer.cc:192 ../libtransmission/torrent.cc:523
+#: ../gtk/TorrentCellRenderer.cc:192 ../libtransmission/torrent.cc:537
 msgid "Tracker warning: '{warning}'"
-msgstr ""
+msgstr "Попередження трекера: «{warning}»"
 
 #: ../gtk/TorrentCellRenderer.cc:195
 msgid "Tracker Error: '{error}'"
-msgstr ""
+msgstr "Помилка трекера: «{error}»"
 
 #: ../gtk/TorrentCellRenderer.cc:198
 msgid "Local error: '{error}'"
-msgstr ""
+msgstr "Локальна помилка: «{error}»"
 
 #: ../gtk/TorrentCellRenderer.cc:226
 #, no-c-format
-msgid "Downloading metadata from {active_count} connected peer ({percent_done:d}% done)"
-msgid_plural "Downloading metadata from {active_count} connected peers ({percent_done:d}% done)"
+msgid "Downloading metadata from {active_count} connected peer ({percent_done}% done)"
+msgid_plural "Downloading metadata from {active_count} connected peers ({percent_done}% done)"
 msgstr[0] ""
 msgstr[1] ""
 msgstr[2] ""
@@ -1658,34 +1663,34 @@ msgstr[3] ""
 #: ../gtk/TorrentCellRenderer.cc:237
 msgid "Downloading from {active_count} of {connected_count} connected peer and webseed"
 msgid_plural "Downloading from {active_count} of {connected_count} connected peers and webseeds"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Завантаження від {active_count} з {connected_count} підʼєднаного вузла або веб-сідера"
+msgstr[1] "Завантаження від {active_count} з {connected_count} підʼєднаних вузлів та веб-сідерів"
+msgstr[2] "Завантаження від {active_count} з {connected_count} підʼєднаних вузлів та веб-сідерів"
+msgstr[3] "Завантаження від {active_count} з {connected_count} підʼєднаних вузлів та веб-сідерів"
 
 #: ../gtk/TorrentCellRenderer.cc:248
 msgid "Downloading from {active_count} webseed"
 msgid_plural "Downloading from {active_count} webseeds"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Завантаження від {active_count} веб-сіда"
+msgstr[1] "Завантаження від {active_count} веб-сідів"
+msgstr[2] "Завантаження від {active_count} веб-сідів"
+msgstr[3] "Завантаження від {active_count} веб-сідів"
 
 #: ../gtk/TorrentCellRenderer.cc:256
 msgid "Downloading from {active_count} of {connected_count} connected peer"
 msgid_plural "Downloading from {active_count} of {connected_count} connected peers"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Завантаження від {active_count} з {connected_count} підʼєднаного вузла"
+msgstr[1] "Завантаження від {active_count} з {connected_count} підʼєднаних вузлів"
+msgstr[2] "Завантаження від {active_count} з {connected_count} підʼєднаних вузлів"
+msgstr[3] "Завантаження від {active_count} з {connected_count} підʼєднаних вузлів"
 
 #: ../gtk/TorrentCellRenderer.cc:265
 msgid "Seeding to {active_count} of {connected_count} connected peer"
 msgid_plural "Seeding to {active_count} of {connected_count} connected peers"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Поширення до {active_count} з {connected_count} підʼєднаного вузла"
+msgstr[1] "Поширення до {active_count} з {connected_count} підʼєднаних вузлів"
+msgstr[2] "Поширення до {active_count} з {connected_count} підʼєднаних вузлів"
+msgstr[3] "Поширення до {active_count} з {connected_count} підʼєднаних вузлів"
 
 #: ../gtk/Utils.cc:37
 msgid "KiB"
@@ -1738,147 +1743,147 @@ msgstr "ТБ/с"
 #: ../gtk/Utils.cc:97
 msgid "{days_from_now:L} day from now"
 msgid_plural "{days_from_now:L} days from now"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "через {days_from_now:L} день"
+msgstr[1] "через {days_from_now:L} дні"
+msgstr[2] "через {days_from_now:L} днів"
+msgstr[3] "через {days_from_now:L} дня"
 
 #: ../gtk/Utils.cc:104
 msgid "{hours_from_now:L} hour from now"
 msgid_plural "{hours_from_now:L} hours from now"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "через {hours_from_now:L} годину"
+msgstr[1] "через {hours_from_now:L} години"
+msgstr[2] "через {hours_from_now:L} годин"
+msgstr[3] "через {hours_from_now:L} години"
 
 #: ../gtk/Utils.cc:111
 msgid "{minutes_from_now:L} minute from now"
 msgid_plural "{minutes_from_now:L} minutes from now"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "через {minutes_from_now:L} хвилину"
+msgstr[1] "через {minutes_from_now:L} хвилини"
+msgstr[2] "через {minutes_from_now:L} хвилин"
+msgstr[3] "через {minutes_from_now:L} хвилини"
 
 #: ../gtk/Utils.cc:118
 msgid "{seconds_from_now:L} second from now"
 msgid_plural "{seconds_from_now:L} seconds from now"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "через {seconds_from_now:L} секунду"
+msgstr[1] "через {seconds_from_now:L} секунди"
+msgstr[2] "через {seconds_from_now:L} секунд"
+msgstr[3] "через {seconds_from_now:L} секунди"
 
 #: ../gtk/Utils.cc:122 ../gtk/Utils.cc:153 ../gtk/Utils.cc:180 ../gtk/Utils.cc:213
 msgid "now"
-msgstr ""
+msgstr "зараз"
 
 #: ../gtk/Utils.cc:129
 msgid "{days_ago:L} day ago"
 msgid_plural "{days_ago:L} days ago"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "{days_ago:L} день тому"
+msgstr[1] "{days_ago:L} дні тому"
+msgstr[2] "{days_ago:L} днів тому"
+msgstr[3] "{days_ago:L} дня тому"
 
 #: ../gtk/Utils.cc:135
 msgid "{hours_ago:L} hour ago"
 msgid_plural "{hours_ago:L} hours ago"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "{hours_ago:L} годину тому"
+msgstr[1] "{hours_ago:L} години тому"
+msgstr[2] "{hours_ago:L} годин тому"
+msgstr[3] "{hours_ago:L} години тому"
 
 #: ../gtk/Utils.cc:142
 msgid "{minutes_ago:L} minute ago"
 msgid_plural "{minutes_ago:L} minutes ago"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "{minutes_ago:L} хвилину тому"
+msgstr[1] "{minutes_ago:L} хвилини тому"
+msgstr[2] "{minutes_ago:L} хвилин тому"
+msgstr[3] "{minutes_ago:L} хвилини тому"
 
 #: ../gtk/Utils.cc:149
 msgid "{seconds_ago:L} second ago"
 msgid_plural "{seconds_ago:L} seconds ago"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "{seconds_ago:L} секунду тому"
+msgstr[1] "{seconds_ago:L} секунди тому"
+msgstr[2] "{seconds_ago:L} секунд тому"
+msgstr[3] "{seconds_ago:L} секунди тому"
 
 #: ../gtk/Utils.cc:162
 msgid "{days:L} day"
 msgid_plural "{days:L} days"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "{days:L} день"
+msgstr[1] "{days:L} дні"
+msgstr[2] "{days:L} днів"
+msgstr[3] "{days:L} дня"
 
 #: ../gtk/Utils.cc:167
 msgid "{hours:L} hour"
 msgid_plural "{hours:L} hours"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "{hours:L} година"
+msgstr[1] "{hours:L} години"
+msgstr[2] "{hours:L} годин"
+msgstr[3] "{hours:L} години"
 
 #: ../gtk/Utils.cc:172
 msgid "{minutes:L} minute"
 msgid_plural "{minutes:L} minutes"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "{minutes:L} хвилина"
+msgstr[1] "{minutes:L} хвилини"
+msgstr[2] "{minutes:L} хвилин"
+msgstr[3] "{minutes:L} хвилини"
 
 #: ../gtk/Utils.cc:177
 msgid "{seconds:L} second"
 msgid_plural "{seconds:L} seconds"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "{seconds:L} секунда"
+msgstr[1] "{seconds:L} секунди"
+msgstr[2] "{seconds:L} секунд"
+msgstr[3] "{seconds:L} секунди"
 
 #: ../gtk/Utils.cc:188
 msgid "{days_left:L} day left"
 msgid_plural "{days_left:L} days left"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Залишився {days_left:L} день"
+msgstr[1] "Залишилося {days_left:L} дні"
+msgstr[2] "Залишилося {days_left:L} днів"
+msgstr[3] "Залишилося {days_left:L} дня"
 
 #: ../gtk/Utils.cc:195
 msgid "{hours_left:L} hour left"
 msgid_plural "{hours_left:L} hours left"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Залишилася {hours_left:L} година"
+msgstr[1] "Залишилося {hours_left:L} години"
+msgstr[2] "Залишилося {hours_left:L} годин"
+msgstr[3] "Залишилося {hours_left:L} години"
 
 #: ../gtk/Utils.cc:202
 msgid "{minutes_left:L} minute left"
 msgid_plural "{minutes_left:L} minutes left"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Залишилася {minutes_left:L} хвилина"
+msgstr[1] "Залишилося {minutes_left:L} хвилини"
+msgstr[2] "Залишилося {minutes_left:L} хвилин"
+msgstr[3] "Залишилося {minutes_left:L} хвилини"
 
 #: ../gtk/Utils.cc:209
 msgid "{seconds_left:L} second left"
 msgid_plural "{seconds_left:L} seconds left"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Залишилася {seconds_left:L} секунда"
+msgstr[1] "Залишилося {seconds_left:L} секунди"
+msgstr[2] "Залишилося {seconds_left:L} секунд"
+msgstr[3] "Залишилося{seconds_left:L} секунди"
 
 #: ../gtk/Utils.cc:249
 msgid "The torrent file '{path}' is already in use by '{torrent_name}'."
-msgstr ""
+msgstr "Торент-файл «{path}» вже використовується торентом «{torrent_name}»."
 
 #: ../gtk/Utils.cc:260
 msgid "Couldn't open torrent"
-msgstr ""
+msgstr "Не вдалося відкрити торент"
 
 #. modal
 #: ../gtk/Utils.cc:549
 msgid "Transmission doesn't know how to use '{url}'"
-msgstr ""
+msgstr "Transmission не знає як користуватися «{url}»"
 
 #: ../gtk/Utils.cc:554
 msgid "This magnet link appears to be intended for something other than BitTorrent."
@@ -1939,37 +1944,37 @@ msgstr "Запустити Transmission з призупинкою усіх то�
 msgid "Start Transmission Minimized"
 msgstr "Запустити Transmission згорнутим"
 
-#: ../libtransmission/announcer-http.cc:282
+#: ../libtransmission/announcer-http.cc:289
 msgid "Couldn't parse announce response: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося розпізнати відповідь анонсу: {error} ({error_code})"
 
-#: ../libtransmission/announcer-http.cc:584
+#: ../libtransmission/announcer-http.cc:599
 msgid "Couldn't parse scrape response: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося розпізнати відповідь scrape: {error} ({error_code})"
 
-#: ../libtransmission/announcer-udp.cc:207 ../libtransmission/announcer-udp.cc:309
+#: ../libtransmission/announcer-udp.cc:225 ../libtransmission/announcer-udp.cc:327
 msgid "Unknown error"
 msgstr "Невідома помилка"
 
-#: ../libtransmission/announcer-udp.cc:463
+#: ../libtransmission/announcer-udp.cc:482
 msgid "Couldn't find address of tracker '{host}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося знайти адресу трекера «{host}»: {error} ({error_code})"
 
-#: ../libtransmission/announcer-udp.cc:548
+#: ../libtransmission/announcer-udp.cc:567
 msgid "Connection failed"
 msgstr "Помилка з’єднання"
 
 #: ../libtransmission/announcer.cc:972
 msgid "Announce error: {error}"
-msgstr ""
+msgstr "Помилка анонсу: {error}"
 
 #: ../libtransmission/announcer.cc:982
 msgid "Announce error: {error} (Retrying in {count} second)"
 msgid_plural "Announce error: {error} (Retrying in {count} seconds)"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Помилка анонсу: {error} (Повторна спроба через {count} секунду)"
+msgstr[1] "Помилка анонсу: {error} (Повторна спроба через {count} секунди)"
+msgstr[2] "Помилка анонсу: {error} (Повторна спроба через {count} секунд)"
+msgstr[3] "Помилка анонсу: {error} (Повторна спроба через {count} секунди)"
 
 #: ../libtransmission/announcer.cc:1044 ../libtransmission/announcer.cc:1372
 msgid "Could not connect to tracker"
@@ -1986,95 +1991,91 @@ msgstr "Вдачно"
 #: ../libtransmission/blocklist.cc:87 ../libtransmission/blocklist.cc:365
 msgid "Blocklist '{path}' has {count} entry"
 msgid_plural "Blocklist '{path}' has {count} entries"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Список блокування «{path}» має {count} запис"
+msgstr[1] "Список блокування «{path}» має {count} записи"
+msgstr[2] "Список блокування «{path}» має {count} записів"
+msgstr[3] "Список блокування «{path}» має {count} записи"
 
 #. don't try to display the actual lines - it causes issues
 #: ../libtransmission/blocklist.cc:319 ../libtransmission/tr-dht.cc:167
 msgid "Couldn't parse line: '{line}'"
-msgstr ""
+msgstr "Не вдалося розпізнати рядок: «{line}»"
 
-#: ../libtransmission/crypto-utils-ccrypto.cc:102 ../libtransmission/crypto-utils-cyassl.cc:69 ../libtransmission/crypto-utils-openssl.cc:67 ../libtransmission/crypto-utils-polarssl.cc:64
+#: ../libtransmission/crypto-utils-ccrypto.cc:75 ../libtransmission/crypto-utils-cyassl.cc:60 ../libtransmission/crypto-utils-openssl.cc:63 ../libtransmission/crypto-utils-polarssl.cc:63
 msgid "{crypto_library} error: {error} ({error_code})"
-msgstr ""
+msgstr "Помилка {crypto_library}: {error} ({error_code})"
 
 #: ../libtransmission/file-posix.cc:272 ../libtransmission/open-files.cc:160 ../libtransmission/session-id.cc:97
 msgid "Couldn't create '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося створити «{path}»: {error} ({error_code})"
 
 #: ../libtransmission/inout.cc:149
 msgid "Couldn't get '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося отримати «{path}»: {error} ({error_code})"
 
-#: ../libtransmission/log.cc:299
+#: ../libtransmission/log.cc:296
 msgid "Too many messages like this! I won't log this message anymore this session."
-msgstr ""
+msgstr "Забагато таких повідомлень! Це повідомлення більше не показуватиметься впродовж цієї сесії."
 
 #: ../libtransmission/makemeta.cc:61 ../libtransmission/watchdir.cc:276
 msgid "Skipping '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Пропуск «{path}»: {error} ({error_code})"
 
 #: ../libtransmission/makemeta.cc:203
 msgid "Couldn't use invalid piece size {expected_size}; using {actual_size} instead"
-msgstr ""
+msgstr "Не вдалося використати неправильний розмір частин {expected_size}; натомість використовується {actual_size}"
 
 #: ../libtransmission/natpmp.cc:111
 msgid "Found public address '{address}'"
-msgstr ""
+msgstr "Знайдено публічну адресу «{address}»"
 
 #: ../libtransmission/natpmp.cc:149
 msgid "Port {port} is no longer forwarded"
-msgstr ""
+msgstr "Порт {port} вже не переадресовується"
 
 #: ../libtransmission/natpmp.cc:203
 msgid "Port {port} forwarded successfully"
-msgstr ""
+msgstr "Порт {port} успішно переадресовано"
 
-#: ../libtransmission/net.cc:306
+#: ../libtransmission/net.cc:278
 msgid "Couldn't create socket: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося створити сокет: {error} ({error_code})"
 
-#: ../libtransmission/net.cc:383
+#: ../libtransmission/net.cc:355
 msgid "Couldn't set source address {address} on {socket}: {error} ({error_code})"
 msgstr ""
 
-#: ../libtransmission/net.cc:404
+#: ../libtransmission/net.cc:376
 msgid "Couldn't connect socket {socket} to {address}:{port}: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося підʼєднати сокет {socket} до {address}:{port}: {error} ({error_code})"
 
-#: ../libtransmission/net.cc:519
+#: ../libtransmission/net.cc:497
 msgid "Couldn't bind port {port} on {address}: {error} ({error_code}) -- Is another copy of Transmission already running?"
-msgstr ""
+msgstr "Не вдалося привʼязати порт {port} на {address}: {error} ({error_code}) — Чи не запущено вже іншу копію Transmission?"
 
-#: ../libtransmission/net.cc:520
+#: ../libtransmission/net.cc:498
 msgid "Couldn't bind port {port} on {address}: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося привʼязати порт {port} на {address}: {error} ({error_code})"
 
 #: ../libtransmission/open-files.cc:183
 msgid "Couldn't open '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося відкрити «{path}»: {error} ({error_code})"
 
 #: ../libtransmission/open-files.cc:212
 msgid "Couldn't preallocate '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося зарезервувати «{path}»: {error} ({error_code})"
 
 #: ../libtransmission/open-files.cc:232
 msgid "Couldn't truncate '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося обрізати «{path}»: {error} ({error_code})"
 
-#: ../libtransmission/peer-io.cc:428
+#: ../libtransmission/peer-io.cc:358
 msgid "Couldn't write to peer"
-msgstr ""
+msgstr "Не вдалося записати до вузла"
 
-#: ../libtransmission/peer-io.cc:450
-msgid "Couldn't write {expected_size} bytes to peer; wrote {actual_size}"
-msgstr ""
-
-#: ../libtransmission/peer-io.cc:515
+#: ../libtransmission/peer-io.cc:413
 msgid "Unknown state: {state}"
-msgstr ""
+msgstr "Невідомий стан: {state}"
 
 #: ../libtransmission/port-forwarding.cc:51
 msgid "Starting"
@@ -2094,164 +2095,168 @@ msgstr "Не переспрямовано"
 
 #: ../libtransmission/port-forwarding.cc:94
 msgid "Mapped private port {private_port} to public port {public_port}"
-msgstr ""
+msgstr "Переадресовано приватний порт {private_port} до публічного порту {public_port}"
 
-#: ../libtransmission/port-forwarding.cc:111
+#: ../libtransmission/port-forwarding.cc:106
 msgid "State changed from '{old_state}' to '{state}'"
-msgstr ""
+msgstr "Стан змінено з «{old_state}» до «{state}»"
 
-#: ../libtransmission/rpc-server.cc:626
+#: ../libtransmission/rpc-server.cc:623
 msgid "Unix socket path must be fewer than {count} characters (including '{prefix}' prefix)"
-msgstr ""
+msgstr "Довжина шляху до Unix-сокета має бути менше {count} символів (включно з префіксом «{prefix}»)"
 
-#: ../libtransmission/rpc-server.cc:660
+#: ../libtransmission/rpc-server.cc:657
 msgid "Unix sockets are unsupported on Windows. Please change '{key}' in your settings."
-msgstr ""
+msgstr "Unix-сокети не підтримуються у Windows. Будь ласка, змініть «{key}» у ваших налаштуваннях."
 
-#: ../libtransmission/rpc-server.cc:687
+#: ../libtransmission/rpc-server.cc:684
 msgid "Couldn't set RPC socket mode to {mode:#o}, defaulting to 0755"
-msgstr ""
+msgstr "Не вдалося встановити режим доступу до RPC сокета {mode:#o}, встановлення 0755 за замовчуванням"
 
-#: ../libtransmission/rpc-server.cc:763
+#: ../libtransmission/rpc-server.cc:760
 msgid "Couldn't bind to {address} after {count} attempt, giving up"
 msgid_plural "Couldn't bind to {address} after {count} attempts, giving up"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Не вдалося привʼязати до {address} після {count} спроби, спроби облишено"
+msgstr[1] "Не вдалося привʼязати до {address} після {count} спроб, спроби облишено"
+msgstr[2] "Не вдалося привʼязати до {address} після {count} спроб, спроби облишено"
+msgstr[3] "Не вдалося привʼязати до {address} після {count} спроби, спроби облишено"
 
-#: ../libtransmission/rpc-server.cc:774
+#: ../libtransmission/rpc-server.cc:771
 msgid "Listening for RPC and Web requests on '{address}'"
-msgstr ""
+msgstr "Прослуховування RPC та Web запитів на «{address}»"
 
-#: ../libtransmission/rpc-server.cc:804
+#: ../libtransmission/rpc-server.cc:801
 msgid "Stopped listening for RPC and Web requests on '{address}'"
-msgstr ""
+msgstr "Зупинено прослуховування RPC та Веб запитів на «{address}»"
 
-#: ../libtransmission/rpc-server.cc:871
+#: ../libtransmission/rpc-server.cc:868
 msgid "Added '{entry}' to host whitelist and it has a '+' or '-'! Are you using an old ACL by mistake?"
 msgstr ""
 
-#: ../libtransmission/rpc-server.cc:876
+#: ../libtransmission/rpc-server.cc:873
 msgid "Added '{entry}' to host whitelist"
-msgstr ""
+msgstr "Додано «{entry}» до білого списку"
 
-#: ../libtransmission/rpc-server.cc:1120
+#: ../libtransmission/rpc-server.cc:1118
 msgid "The '{key}' setting is '{value}' but must be an IPv4 or IPv6 address or a Unix socket path. Using default value '0.0.0.0'"
-msgstr ""
+msgstr "Значення «{key}» встановлено до «{value}», але має бути IPv4 або IPv6 адресою або шляхом до Unix-сокета. Використовується значення за замовчанням «0.0.0.0»"
 
-#: ../libtransmission/rpc-server.cc:1135
+#: ../libtransmission/rpc-server.cc:1133
 msgid "Serving RPC and Web requests on {address}"
-msgstr ""
+msgstr "Обслуговування RPC та Web запитів на {address}"
 
-#: ../libtransmission/rpc-server.cc:1140
+#: ../libtransmission/rpc-server.cc:1138
 msgid "Whitelist enabled"
 msgstr "Білий список увімкнено"
 
-#: ../libtransmission/rpc-server.cc:1145
+#: ../libtransmission/rpc-server.cc:1143
 msgid "Password required"
 msgstr "Потрібен пароль"
 
-#: ../libtransmission/rpc-server.cc:1152
+#: ../libtransmission/rpc-server.cc:1149
 msgid "Serving RPC and Web requests from '{path}'"
-msgstr ""
+msgstr "Обслуговування RPC та Web запитів із «{path}»"
 
-#: ../libtransmission/rpcimpl.cc:1369
+#: ../libtransmission/rpcimpl.cc:1370
 msgid "Couldn't test port: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося перевірити порт: {error} ({error_code})"
 
-#: ../libtransmission/rpcimpl.cc:1409
+#: ../libtransmission/rpcimpl.cc:1410
 msgid "Couldn't fetch blocklist: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося отримати список блокування: {error} ({error_code})"
 
-#: ../libtransmission/rpcimpl.cc:1543
+#: ../libtransmission/rpcimpl.cc:1544
 msgid "Couldn't fetch torrent: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося отримати торент: {error} ({error_code})"
 
 #: ../libtransmission/session-id.cc:204
 msgid "Couldn't open session lock file '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося відкрити lock-файл сесії «{path}»: {error} ({error_code})"
 
-#: ../libtransmission/session.cc:747
+#: ../libtransmission/session.cc:762
 msgid "Transmission version {version} starting"
-msgstr ""
+msgstr "Transmission версії {version} запускається"
 
-#: ../libtransmission/session.cc:1499
+#: ../libtransmission/session.cc:1536
 msgid "Time to turn off turtle mode"
-msgstr ""
+msgstr "Час вимкнення «черепашого» режиму"
 
-#: ../libtransmission/session.cc:1499
+#: ../libtransmission/session.cc:1536
 msgid "Time to turn on turtle mode"
-msgstr ""
+msgstr "Час увімкнення «черепашого» режиму"
 
-#: ../libtransmission/session.cc:1945
+#: ../libtransmission/session.cc:1983
 msgid "Transmission version {version} shutting down"
-msgstr ""
+msgstr "Transmission версії {version} завершує роботу"
 
-#: ../libtransmission/session.cc:2065
+#: ../libtransmission/session.cc:2101
 msgid "Loaded {count} torrent"
 msgid_plural "Loaded {count} torrents"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Завантажено {count} торент"
+msgstr[1] "Завантажено {count} торенти"
+msgstr[2] "Завантажено {count} торентів"
+msgstr[3] "Завантажено {count} торента"
 
-#: ../libtransmission/torrent-magnet.cc:321
+#: ../libtransmission/torrent-magnet.cc:355
 msgid "Couldn't parse magnet metainfo: '{error}'. Redownloading {piece_count} piece"
 msgid_plural "Couldn't parse magnet metainfo: '{error}'. Redownloading {piece_count} pieces"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "Не вдалося розпізнати метадані magnet: «{error}». Перезавантаження {piece_count} частини"
+msgstr[1] "Не вдалося розпізнати метадані magnet: «{error}». Перезавантаження {piece_count} частин"
+msgstr[2] "Не вдалося розпізнати метадані magnet: «{error}». Перезавантаження {piece_count} частин"
+msgstr[3] "Не вдалося розпізнати метадані magnet: «{error}». Перезавантаження {piece_count} частин"
 
-#: ../libtransmission/torrent-metainfo.cc:782
+#: ../libtransmission/torrent-metainfo.cc:778
 msgid "Migrated torrent file from '{old_path}' to '{path}'"
 msgstr ""
 
-#: ../libtransmission/torrent.cc:463
-msgid "Seed ratio reached; pausing torrent"
+#: ../libtransmission/torrent.cc:127
+msgid "Couldn't use metaInfo from '{path}' for '{magnet}': {error} ({error_code})"
 msgstr ""
 
-#: ../libtransmission/torrent.cc:476
+#: ../libtransmission/torrent.cc:488
+msgid "Seed ratio reached; pausing torrent"
+msgstr "Досягнуто співвідношення роздачі; призупинення торента"
+
+#: ../libtransmission/torrent.cc:495
 msgid "Seeding idle limit reached; pausing torrent"
-msgstr ""
+msgstr "Досягнуто ліміту роздачі простою; призупинення торента"
 
 #. lookups by obfuscated hash will fail for this torrent
-#: ../libtransmission/torrent.cc:574
+#: ../libtransmission/torrent.cc:586
 msgid "Couldn't compute obfuscated info hash"
 msgstr ""
 
-#: ../libtransmission/torrent.cc:635
+#: ../libtransmission/torrent.cc:647
 msgid "No data found! Ensure your drives are connected or use \"Set Location\". To re-download, remove the torrent and re-add it."
 msgstr "Не знайдено даних! З’єднайте з комп’ютером Ваші носії даних або скористайтеся пунктом «Встановити розташування». Щоб завантажити торент від початку, вилучіть його запис, а потім знову додайте його."
 
-#: ../libtransmission/torrent.cc:1430
+#: ../libtransmission/torrent.cc:1437
 msgid "Restarted manually -- disabling its seed ratio"
 msgstr "Перезапущено вручну — співвідношення вимкнено"
 
-#: ../libtransmission/torrent.cc:1550
+#: ../libtransmission/torrent.cc:1557
 msgid "Pausing torrent"
-msgstr ""
+msgstr "Призупинення торента"
 
-#: ../libtransmission/torrent.cc:1599
+#: ../libtransmission/torrent.cc:1606
 msgid "Removing torrent"
 msgstr "Вилучення торенту"
 
-#: ../libtransmission/torrent.cc:1792
+#: ../libtransmission/torrent.cc:1758
 msgid "Calling script '{path}'"
-msgstr ""
+msgstr "Запуск сценарію «{path}»"
 
-#: ../libtransmission/torrent.cc:1801
+#: ../libtransmission/torrent.cc:1767
 msgid "Couldn't call script '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося запустити сценарій «{path}»: {error} ({error_code})"
 
-#: ../libtransmission/torrent.cc:2196 ../libtransmission/torrent.cc:2316
+#: ../libtransmission/torrent.cc:2140 ../libtransmission/torrent.cc:2260
 msgid "Couldn't move '{old_path}' to '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося пересунути «{old_path}» до «{path}»: {error} ({error_code})"
 
 #: ../libtransmission/tr-dht.cc:115
 msgid "Couldn't look up '{address}:{port}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося знайти «{address}:{port}»: {error} ({error_code})"
 
 #: ../libtransmission/tr-dht.cc:287
 msgid "Initializing DHT"
@@ -2267,63 +2272,63 @@ msgstr ""
 
 #: ../libtransmission/tr-udp.cc:208
 msgid "Couldn't rebind IPv6 socket {address}: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося наново привʼязати сокет IPv6 {address}: {error} ({error_code})"
 
 #: ../libtransmission/tr-udp.cc:289
 msgid "Couldn't create IPv4 socket"
-msgstr ""
+msgstr "Не вдалося створити сокет IPv4"
 
 #: ../libtransmission/tr-udp.cc:310
 msgid "Couldn't bind IPv4 socket {address}: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося привʼязати сокет IPv4 {address}: {error} ({error_code})"
 
 #: ../libtransmission/tr-udp.cc:323
 msgid "Couldn't allocate IPv4 event"
-msgstr ""
+msgstr "Не вдалося зарезервувати подію IPv4"
 
 #: ../libtransmission/tr-udp.cc:341
 msgid "Couldn't allocate IPv6 event"
-msgstr ""
+msgstr "Не вдалося зарезервувати подію IPv6"
 
-#: ../libtransmission/tr-utp.cc:100
+#: ../libtransmission/tr-utp.cc:95
 msgid "Unknown socket family"
-msgstr ""
+msgstr "Невідоме сімейство сокетів"
 
-#: ../libtransmission/upnp.cc:279
+#: ../libtransmission/upnp.cc:277
 msgid "Found Internet Gateway Device '{url}'"
-msgstr ""
+msgstr "Знайдено інтернет маршрутизатор «{url}»"
 
-#: ../libtransmission/upnp.cc:280
+#: ../libtransmission/upnp.cc:278
 msgid "Local Address is '{address}'"
-msgstr ""
+msgstr "Локальна Адреса «{address}»"
 
-#: ../libtransmission/upnp.cc:303
+#: ../libtransmission/upnp.cc:301
 msgid "Port {port} is not forwarded"
-msgstr ""
+msgstr "Порт {port} не переадресовується"
 
-#: ../libtransmission/upnp.cc:313
+#: ../libtransmission/upnp.cc:311
 msgid "Stopping port forwarding through '{url}', service '{type}'"
-msgstr ""
+msgstr "Припинення переадресування портів через «{url}», служба «{type}»"
 
-#: ../libtransmission/upnp.cc:345
+#: ../libtransmission/upnp.cc:343
 msgid "Port forwarding through '{url}', service '{type}'. (local address: {address}:{port})"
-msgstr ""
+msgstr "Переадресація порту за допомогою «{url}», служба «{type}». (локальна адреса: {address}:{port})"
 
-#: ../libtransmission/upnp.cc:353
+#: ../libtransmission/upnp.cc:351
 msgid "Port {port} is forwarded"
-msgstr ""
+msgstr "Порт {port} переадресовується"
 
-#: ../libtransmission/upnp.cc:359
+#: ../libtransmission/upnp.cc:357
 msgid "If your router supports UPnP, please make sure UPnP is enabled!"
-msgstr ""
+msgstr "Якщо ваш маршрутизатор підтримує UPnP, будь ласка, переконайтеся, що UPnP увімкнено!"
 
 #: ../libtransmission/utils.cc:165 ../libtransmission/utils.cc:229
 msgid "Couldn't read '{path}': Not a regular file"
-msgstr ""
+msgstr "Не вдалося зчитати «{path}»: Не є регулярним файлом"
 
 #: ../libtransmission/variant-json.cc:91
 msgid "Couldn't parse JSON at position {position} '{text}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося розпізнати JSON на позиції {position} «{text}»: {error} ({error_code})"
 
 #. did caller give us an uninitialized val?
 #: ../libtransmission/variant.cc:891
@@ -2332,47 +2337,47 @@ msgstr "Помилкові метадані"
 
 #: ../libtransmission/watchdir-inotify.cc:76 ../libtransmission/watchdir-kqueue.cc:66 ../libtransmission/watchdir-win32.cc:161
 msgid "Couldn't read event: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося зчитати подію: {error} ({error_code})"
 
 #: ../libtransmission/watchdir-inotify.cc:85 ../libtransmission/watchdir-win32.cc:170
 msgid "Couldn't read event: expected {expected_size}, got {actual_size}"
-msgstr ""
+msgstr "Не вдалося зчитати подію: очікувалося {expected_size}, отримано {actual_size}"
 
 #: ../libtransmission/watchdir-inotify.cc:106 ../libtransmission/watchdir-win32.cc:194
 msgid "Couldn't read filename: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося зчитати ім'я файлу: {error} ({error_code})"
 
 #: ../libtransmission/watchdir-inotify.cc:115 ../libtransmission/watchdir-win32.cc:203
 msgid "Couldn't read filename: expected {expected_size}, got {actual_size}"
-msgstr ""
+msgstr "Не вдалося зчитати імʼя файлу: очікувалося {expected_size}, отримано {actual_size}"
 
 #: ../libtransmission/watchdir-inotify.cc:169 ../libtransmission/watchdir-inotify.cc:181 ../libtransmission/watchdir-inotify.cc:193 ../libtransmission/watchdir-kqueue.cc:120 ../libtransmission/watchdir-kqueue.cc:132 ../libtransmission/watchdir-kqueue.cc:146
 msgid "Couldn't watch '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося відстежити «{path}»: {error} ({error_code})"
 
 #: ../libtransmission/watchdir-inotify.cc:217 ../libtransmission/watchdir-win32.cc:358
 msgid "Couldn't scan '{path}': {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося просканувати «{path}»: {error} ({error_code})"
 
 #: ../libtransmission/watchdir-win32.cc:124
 msgid "Couldn't read directory changes"
-msgstr ""
+msgstr "Не вдалося зчитати зміни до теки"
 
 #: ../libtransmission/watchdir-win32.cc:131
 msgid "Couldn't wait for directory changes"
-msgstr ""
+msgstr "Не вдалося стежити за змінами до теки"
 
 #: ../libtransmission/watchdir-win32.cc:281
 msgid "Couldn't convert '{path}' to native path"
-msgstr ""
+msgstr "Не вдалося перетворити «{path}» на нативний шлях"
 
 #: ../libtransmission/watchdir-win32.cc:321
 msgid "Couldn't create pipe: {error} ({error_code})"
-msgstr ""
+msgstr "Не вдалося створити конвеєр: {error} ({error_code})"
 
 #: ../libtransmission/watchdir-win32.cc:343
 msgid "Couldn't create thread"
-msgstr ""
+msgstr "Не вдалося створити потік виконання"
 
 #: ../libtransmission/web.cc:125
 msgid "Will verify tracker certs using envvar CURL_CA_BUNDLE: {bundle}"
@@ -2389,699 +2394,31 @@ msgstr ""
 #: ../utils/remote.cc:128
 msgid "hour"
 msgid_plural "hours"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "година"
+msgstr[1] "години"
+msgstr[2] "годин"
+msgstr[3] "години"
 
 #: ../utils/remote.cc:129
 msgid "minute"
 msgid_plural "minutes"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "хвилина"
+msgstr[1] "хвилини"
+msgstr[2] "хвилин"
+msgstr[3] "хвилини"
 
 #: ../utils/remote.cc:130 ../utils/remote.cc:150
 msgid "seconds"
 msgid_plural "seconds"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
+msgstr[0] "секунда"
+msgstr[1] "секунди"
+msgstr[2] "секунд"
+msgstr[3] "секунди"
 
 #: ../utils/remote.cc:134
 msgid "day"
 msgid_plural "days"
-msgstr[0] ""
-msgstr[1] ""
-msgstr[2] ""
-msgstr[3] ""
-
-#, c-format
-#~ msgid " (Limit: %s)"
-#~ msgstr "(Обмеження: %s)"
-
-#, c-format
-#~ msgid "%'d Torrent Properties"
-#~ msgstr "%d Властивості торенту"
-
-#, c-format
-#~ msgid "%'d day"
-#~ msgid_plural "%'d days"
-#~ msgstr[0] "%d день"
-#~ msgstr[1] "%d дні"
-#~ msgstr[2] "%d днів"
-#~ msgstr[3] "%d днів"
-
-#, c-format
-#~ msgid "%'d hour"
-#~ msgid_plural "%'d hours"
-#~ msgstr[0] "%d година"
-#~ msgstr[1] "%d години"
-#~ msgstr[2] "%d годин"
-#~ msgstr[3] "%d годин"
-
-#, c-format
-#~ msgid "%'d minute"
-#~ msgid_plural "%'d minutes"
-#~ msgstr[0] "%d хвилина"
-#~ msgstr[1] "%d хвилини"
-#~ msgstr[2] "%d хвилин"
-#~ msgstr[3] "%d хвилин"
-
-#, c-format
-#~ msgid "%'d second"
-#~ msgid_plural "%'d seconds"
-#~ msgstr[0] "%d секунда"
-#~ msgstr[1] "%d секунди"
-#~ msgstr[2] "%d секунд"
-#~ msgstr[3] "%d секунд"
-
-#, c-format
-#~ msgid "%*.*s is not a valid address"
-#~ msgstr "%*.*s не є дійсною адресою"
-
-#, c-format
-#~ msgid "%*.*s is not an IPv4 or IPv6 address. RPC listeners must be IPv4 or IPv6"
-#~ msgstr "%*.*s не є IPv4 або IPv6 адресою. Прослуховувачі RPC повинні бути IPv4 або IPv6"
-
-#, c-format
-#~ msgid "%1$'d Piece @ %2$s"
-#~ msgid_plural "%1$'d Pieces @ %2$s"
-#~ msgstr[0] "%1$d частина @ %2$s"
-#~ msgstr[1] "%1$d частини @ %2$s"
-#~ msgstr[2] "%1$d частин @ %2$s"
-#~ msgstr[3] "%1$d частин @ %2$s"
-
-#, c-format
-#~ msgid "%1$s  %2$s"
-#~ msgstr "%1$s %2$s"
-
-#, c-format
-#~ msgid "%1$s %2$s  %3$s %4$s"
-#~ msgstr "%1$s %2$s %3$s %4$s"
-
-#, c-format
-#~ msgid "%1$s (%2$'d piece @ %3$s)"
-#~ msgid_plural "%1$s (%2$'d pieces @ %3$s)"
-#~ msgstr[0] "%1$s (%2$'d частина @ %3$s)"
-#~ msgstr[1] "%1$s (%2$'d частини @ %3$s)"
-#~ msgstr[2] "%1$s (%2$'d частин @ %3$s)"
-#~ msgstr[3] "%1$s (%2$'d частин @ %3$s)"
-
-#, c-format
-#~ msgid "%1$s (%2$'d piece)"
-#~ msgid_plural "%1$s (%2$'d pieces)"
-#~ msgstr[0] "%1$s (%2$'d частина)"
-#~ msgstr[1] "%1$s (%2$'d частини)"
-#~ msgstr[2] "%1$s (%2$'d частин)"
-#~ msgstr[3] "%1$s (%2$'d частин)"
-
-#, c-format
-#~ msgid "%1$s (%2$s%% of %3$s%% Available)"
-#~ msgstr "%1$s (доступно %2$s%% з %3$s%%)"
-
-#, c-format
-#~ msgid "%1$s (%2$s%% of %3$s%% Available); %4$s Unverified"
-#~ msgstr "%1$s (доступно %2$s%% з %3$s%%); не перевірено %4$s"
-
-#, c-format
-#~ msgid "%1$s (%2$s%%)"
-#~ msgstr "%1$s (%2$s%%)"
-
-#, c-format
-#~ msgid "%1$s (+%2$s discarded after failed checksum)"
-#~ msgstr "%1$s (+%2$s відкидається після невдалої перевірки контрольної суми)"
-
-#, c-format
-#~ msgid "%1$s ago"
-#~ msgstr "%1$s тому"
-
-#, c-format
-#~ msgid "%1$s of %2$s (%3$s%%)"
-#~ msgstr "%1$s з %2$s (%3$s%%)"
-
-#, c-format
-#~ msgid "%1$s of %2$s (%3$s%%), uploaded %4$s (Ratio: %5$s Goal: %6$s)"
-#~ msgstr "%1$s з %2$s (%3$s%%), відвантажено %4$s (співвідношення: %5$s мета: %6$s)"
-
-#, c-format
-#~ msgid "%1$s of %2$s (%3$s%%), uploaded %4$s (Ratio: %5$s)"
-#~ msgstr "%1$s з %2$s (%3$s%%), відвантажено %4$s (співвідношення: %5$s)"
-
-#, c-format
-#~ msgid "%1$s, uploaded %2$s (Ratio: %3$s Goal: %4$s)"
-#~ msgstr "%1$s, завантажено %2$s (співвідношення: %3$s мета: %4$s)"
-
-#, c-format
-#~ msgid "%1$s, uploaded %2$s (Ratio: %3$s)"
-#~ msgstr "%1$s, вивантажено %2$s (співвідношення: %3$s)"
-
-#, c-format
-#~ msgid "%1$s; %2$'d File"
-#~ msgid_plural "%1$s; %2$'d Files"
-#~ msgstr[0] "%1$s; %2$d файл"
-#~ msgstr[1] "%1$s; %2$d файли"
-#~ msgstr[2] "%1$s; %2$d файлів"
-#~ msgstr[3] "%1$s; %2$d файлів"
-
-#, c-format
-#~ msgid "%s %s started"
-#~ msgstr "%s %s запущено"
-
-#, c-format
-#~ msgid "%s (Ratio: %s)"
-#~ msgstr "%s (співвідношення: %s)"
-
-#, c-format
-#~ msgid "%s - Add Tracker"
-#~ msgstr "%s — додавання трекера"
-
-#, c-format
-#~ msgid "%s - Edit Trackers"
-#~ msgstr "%s — зміна трекеру"
-
-#, c-format
-#~ msgid "%s Properties"
-#~ msgstr "Властивості %s"
-
-#, c-format
-#~ msgid "%s free"
-#~ msgstr "%s вільно"
-
-#, c-format
-#~ msgid "%s remaining"
-#~ msgstr "%s залишилося"
-
-#, c-format
-#~ msgid "%s succeeded (%d)"
-#~ msgstr "%s успішно (%d)"
-
-#~ msgid "<b>Closing Connections</b>"
-#~ msgstr "<b>Закриття з'єднань</b>"
-
-#~ msgid "<b>Unable to update.</b>"
-#~ msgstr "<b>Не вдалося оновити.</b>"
-
-#~ msgid "<b>Update succeeded!</b>"
-#~ msgstr "<b>Успішно оновлено!</b>"
-
-#~ msgid "<i>No source selected</i>"
-#~ msgstr "<i>Не вказано джерело</i>"
-
-#~ msgid "<i>Testing TCP port…</i>"
-#~ msgstr "<i>Тестування порту TCP…</i>"
-
-#, c-format
-#~ msgid "Asking for more peers in %s"
-#~ msgstr "Запит щодо нових вузлів за %s"
-
-#, c-format
-#~ msgid "Asking for more peers now… <small>%s</small>"
-#~ msgstr "Надсилання запиту щодо додаткових отримувачів… <small>%s</small>"
-
-#, c-format
-#~ msgid "Asking for peer counts in %s"
-#~ msgstr "Запит щодо кількості вузлів за %s"
-
-#, c-format
-#~ msgid "Asking for peer counts now… <small>%s</small>"
-#~ msgstr "Надсилання запиту щодо кількості отримувачів… <small>%s</small>"
-
-#~ msgid "Automatically add .torrent files _from:"
-#~ msgstr "Автоматично додавати .torrent файли _з:"
-
-#, c-format
-#~ msgid "Blocklist \"%s\" contains %zu entries"
-#~ msgstr "У списку блокування «%s» міститься %zu записів"
-
-#, c-format
-#~ msgid "Blocklist \"%s\" updated with %zu entries"
-#~ msgstr "Список блокування «%s» оновлено %zu записами"
-
-#, c-format
-#~ msgid "Blocklist contains %'d rule"
-#~ msgid_plural "Blocklist contains %'d rules"
-#~ msgstr[0] "У переліку блокування міститься %d правило"
-#~ msgstr[1] "У переліку блокування міститься %d правила"
-#~ msgstr[2] "У переліку блокування міститься %d правил"
-#~ msgstr[3] "У переліку блокування міститься %d правил"
-
-#, c-format
-#~ msgid "Blocklist has %'d rule."
-#~ msgid_plural "Blocklist has %'d rules."
-#~ msgstr[0] "У переліку блокування міститься %d правило."
-#~ msgstr[1] "У переліку блокування міститься %d правила."
-#~ msgstr[2] "У переліку блокування міститься %d правил."
-#~ msgstr[3] "У переліку блокування міститься %d правил."
-
-#, c-format
-#~ msgid ""
-#~ "Click to disable Alternative Speed Limits\n"
-#~ " (%1$s down, %2$s up)"
-#~ msgstr ""
-#~ "Натисніть щоб заборонити Альтернативні обмеження швидкості\n"
-#~ " (%1$s заван., %2$s виван.)"
-
-#, c-format
-#~ msgid ""
-#~ "Click to enable Alternative Speed Limits\n"
-#~ " (%1$s down, %2$s up)"
-#~ msgstr ""
-#~ "Натисніть щоб дозволити Альтернативні обмеження швидкості\n"
-#~ " (%1$s заван., %2$s виван.)"
-
-#~ msgid "Complete"
-#~ msgstr "Завершено"
-
-#, c-format
-#~ msgid "Couldn't bind port %d on %s: %s"
-#~ msgstr "Не вдалося прив’язатися до порту %d на %s: %s"
-
-#, c-format
-#~ msgid "Couldn't bind port %d on %s: %s (%s)"
-#~ msgstr "Не вдалося прив’язатися до порту %d на %s: %s (%s)"
-
-#, c-format
-#~ msgid "Couldn't connect socket %<PRIdMAX> to %s, port %d (errno %d - %s)"
-#~ msgstr "Неможливо з'єднатися з сокету %<PRIdMAX> до %s, порт %d (номер помилки %d - %s)"
-
-#, c-format
-#~ msgid "Couldn't create \"%1$s\": %2$s"
-#~ msgstr "Не вдалося створити «%1$s»: %2$s"
-
-#, c-format
-#~ msgid "Couldn't create socket: %s"
-#~ msgstr "Не вдається створити сокет: %s"
-
-#, c-format
-#~ msgid "Couldn't find settings key \"%s\""
-#~ msgstr "Не вдалося знайти ключ налаштувань \"%s\""
-
-#, c-format
-#~ msgid "Couldn't get directory for \"%1$s\": %2$s"
-#~ msgstr "Не вдалося отримати каталог для \"%1$s\": %2$s"
-
-#, c-format
-#~ msgid "Couldn't inhibit desktop hibernation: %s"
-#~ msgstr "Не вдалося відкласти присипляння системи: %s"
-
-#, c-format
-#~ msgid "Couldn't open \"%1$s\": %2$s"
-#~ msgstr "Не вдалося відкрити «%1$s»: %2$s"
-
-#, c-format
-#~ msgid "Couldn't preallocate file \"%1$s\" (%2$s, size: %3$<PRIu64>): %4$s"
-#~ msgstr "Неможливо попередньо розмістити файл \"%1$s\" (%2$s, розмір: %3$<PRIu64>): %4$s"
-
-#, c-format
-#~ msgid "Couldn't read \"%1$s\": %2$s"
-#~ msgstr "Не вдалося прочитати «%1$s»: %2$s"
-
-#, c-format
-#~ msgid "Couldn't read \"%s\""
-#~ msgstr "Неможливо прочитати \"%s\""
-
-#, c-format
-#~ msgid "Couldn't read \"%s\": %s"
-#~ msgstr "Не вдалося прочитати «%s»: %s"
-
-#, c-format
-#~ msgid "Couldn't save \"%s\""
-#~ msgstr "Не вдалося зберегти «%s»"
-
-#, c-format
-#~ msgid "Couldn't save file \"%1$s\": %2$s"
-#~ msgstr "Не вдалося зберегти «%1$s»: %2$s"
-
-#, c-format
-#~ msgid "Couldn't set source address %s on %<PRIdMAX>: %s"
-#~ msgstr "Не вдалося встановити вихідну адресу %s у %<PRIdMAX>: %s"
-
-#, c-format
-#~ msgid "Couldn't truncate \"%1$s\": %2$s"
-#~ msgstr "Не вдалося обрізати «%1$s»: %2$s"
-
-#, c-format
-#~ msgid "Created \"%s\"!"
-#~ msgstr "«%s» створено!"
-
-#, c-format
-#~ msgid "Created by %1$s"
-#~ msgstr "Автор %1$s"
-
-#, c-format
-#~ msgid "Created by %1$s on %2$s"
-#~ msgstr "Створено автором %1$s з вик. %2$s"
-
-#, c-format
-#~ msgid "Created on %1$s"
-#~ msgstr "Створено з вик. %1$s"
-
-#, c-format
-#~ msgid "Creating \"%s\""
-#~ msgstr "Створюється «%s»"
-
-#, c-format
-#~ msgid "Do_wnload (%s):"
-#~ msgstr "За_вантаження (%s):"
-
-#~ msgid "Done"
-#~ msgstr "Виконано"
-
-#, c-format
-#~ msgid "Down: %1$s, Up: %2$s"
-#~ msgstr "Завант.: %1$s, вивант.: %2$s"
-
-#, c-format
-#~ msgid "Downloading from %1$'d %2$s"
-#~ msgstr "Завантаження від %1$'d %2$s"
-
-#, c-format
-#~ msgid "Downloading from %1$'d of %2$'d %3$s"
-#~ msgstr "Завантаження від %1$'d of %2$'d %3$s"
-
-#, c-format
-#~ msgid "Downloading from %1$'d of %2$'d %3$s and %4$'d %5$s"
-#~ msgstr "Завантаження від %1$'d з %2$'d %3$s та %4$'d %5$s"
-
-#, c-format
-#~ msgid "Downloading metadata from %1$'d %2$s (%3$d%% done)"
-#~ msgstr "Завантаження метаданих від %1$'d %2$s (%3$d%% завершено)"
-
-#~ msgid "Error opening torrent"
-#~ msgstr "Помилка під час спроби відкрити торент"
-
-#, c-format
-#~ msgid "Error reading \"%s\": %s"
-#~ msgstr "Не вдалося прочитати «%s»: %s"
-
-#, c-format
-#~ msgid "Error registering Transmission as a %s handler: %s"
-#~ msgstr "Реєстрація помилки Transmission як %s обробник: %s"
-
-#, c-format
-#~ msgid "Error saving \"%*.*s\": %s (%d)"
-#~ msgstr "Помилка збереження \"%*.*s\": %s (%d)"
-
-#, c-format
-#~ msgid "Error writing \"%s\": %s"
-#~ msgstr "Не вдалося записати «%s»: %s"
-
-#, c-format
-#~ msgid "Error: %s"
-#~ msgstr "Помилка: %s"
-
-#, c-format
-#~ msgid "Error: invalid announce URL \"%s\""
-#~ msgstr "Помилка: пошкоджена адреса оголошень «%s»"
-
-#, c-format
-#~ msgid "Failed to set piece size to %s, leaving it at %s"
-#~ msgstr "Не вдалося встановити розмір частини %s, залишивши його в %s"
-
-#, c-format
-#~ msgid "Found Internet Gateway Device \"%s\""
-#~ msgstr "Знайдено інтернет маршрутизатор «%s»"
-
-#, c-format
-#~ msgid "Found public address \"%s\""
-#~ msgstr "Знайдено відкриту адресу «%s»"
-
-#~ msgid "Friday"
-#~ msgstr "П’ятниця"
-
-#, c-format
-#~ msgid "Got a list of %1$s%2$'d peers%3$s %4$s ago"
-#~ msgstr "Перелік вузлів отримано з %1$s%2$d %3$s %4$s годин тому"
-
-#, c-format
-#~ msgid "Got a scrape error \"%s%s%s\" %s ago"
-#~ msgstr "Отримано повідомлення про помилку «%s%s%s» %s тому"
-
-#, c-format
-#~ msgid "Got an error %1$s\"%2$s\"%3$s %4$s ago"
-#~ msgstr "Отримано повідомлення про помилку %1$s«%2$s»%3$s %4$s тому"
-
-#~ msgid "Idle"
-#~ msgstr "Неактивний"
-
-#~ msgid "Is another copy of Transmission already running?"
-#~ msgstr "Перевірте, чи не запущено іншу копію Transmission?"
-
-#, c-format
-#~ msgid "Limit _download speed (%s):"
-#~ msgstr "Обмежити _швидкість завантаження (%s):"
-
-#, c-format
-#~ msgid "Limit _upload speed (%s):"
-#~ msgstr "Обмежити шв_идкість відвантаження (%s):"
-
-#, c-format
-#~ msgid "Loaded %d torrents"
-#~ msgstr "Завантажено %d торентів"
-
-#, c-format
-#~ msgid "Local Address is \"%s\""
-#~ msgstr "Локальна адреса «%s»"
-
-#~ msgid "Mo_ve .torrent file to the trash"
-#~ msgstr "Вилу_чати файли .torrent до смітника"
-
-#~ msgid "Monday"
-#~ msgstr "Понеділок"
-
-#, c-format
-#~ msgid "Moving \"%s\""
-#~ msgstr "Пересування «%s»"
-
-#~ msgid "Not a regular file"
-#~ msgstr "Не є звичайним файлом"
-
-#, c-format
-#~ msgid "Peer list request %1$stimed out%2$s %3$s ago; will retry"
-#~ msgstr "Запит переліку вузлів %1$sпрострочено%2$s %3$s; повтор"
-
-#, c-format
-#~ msgid "Piece %<PRIu32>, which was just downloaded, failed its checksum test"
-#~ msgstr "Частина %<PRIu32>, яка тільки що була завантажена, не пройшла тест контрольної суми"
-
-#, c-format
-#~ msgid "Port %d forwarded successfully"
-#~ msgstr "Порт %d успішно переадресовується"
-
-#, c-format
-#~ msgid "Port %d isn't forwarded"
-#~ msgstr "Порт %d не переадресовується"
-
-#~ msgid "Port Forwarding"
-#~ msgstr "Переадресування портів"
-
-#~ msgid "Port Forwarding (NAT-PMP)"
-#~ msgstr "Переадресування портів (NAT-PMP)"
-
-#~ msgid "Port Forwarding (UPnP)"
-#~ msgstr "Переадресування портів (UPnP)"
-
-#~ msgid "Port forwarding successful!"
-#~ msgstr "Переадресування портів успішне!"
-
-#, c-format
-#~ msgid "Port forwarding through \"%s\", service \"%s\". (local address: %s:%d)"
-#~ msgstr "Переспрямування портів за допомогою «%s», служба «%s». (локальна адреса: %s:%d)"
-
-#~ msgid "Port is <b>closed</b>"
-#~ msgstr "Порт <b>закритий</b>"
-
-#~ msgid "Port is <b>open</b>"
-#~ msgstr "Порт <b>відкритий</b>"
-
-#, c-format
-#~ msgid "Preallocated file \"%1$s\" (%2$s, size: %3$<PRIu64>)"
-#~ msgstr "Попередньо розміщений файл \"%1$s\" (%2$s, розмір: %3$<PRIu64>)"
-
-#, c-format
-#~ msgid "Ratio: %s"
-#~ msgstr "Співвідношення: %s"
-
-#~ msgid "Saturday"
-#~ msgstr "Субота"
-
-#, c-format
-#~ msgid "Saved \"%s\""
-#~ msgstr "Збережено «%s»"
-
-#, c-format
-#~ msgid "Scanned %s"
-#~ msgstr "Проскановано %s"
-
-#, c-format
-#~ msgid "Searching for web interface file \"%s\""
-#~ msgstr "Пошук файлу веб-інтерфейсу \"%s\""
-
-#, c-format
-#~ msgid "Seeding to %1$'d of %2$'d connected peer"
-#~ msgid_plural "Seeding to %1$'d of %2$'d connected peers"
-#~ msgstr[0] "Поширення до %1$d з %2$d під’єднаного вузла"
-#~ msgstr[1] "Поширення до %1$d з %2$d під’єднаних вузлів"
-#~ msgstr[2] "Поширення до %1$d з %2$d під’єднаних вузлів"
-#~ msgstr[3] "Поширення до %1$d з %2$d під’єднаних вузлів"
-
-#, c-format
-#~ msgid "Serving RPC and Web requests from directory '%s'"
-#~ msgstr "Обслуговування RPC та веб-запитів з каталога '%s'"
-
-#, c-format
-#~ msgid "Serving RPC and Web requests on %s:%d%s"
-#~ msgstr "Обслуговування RPC та веб-запитів на %s:%d%s"
-
-#, c-format
-#~ msgid "Skipping unknown torrent \"%s\""
-#~ msgstr "Пропускаємо невідомий торент «%s»"
-
-#, c-format
-#~ msgid "Started %'d time"
-#~ msgid_plural "Started %'d times"
-#~ msgstr[0] "Запущено %d раз"
-#~ msgstr[1] "Запущено %d рази"
-#~ msgstr[2] "Запущено %d разів"
-#~ msgstr[3] "Запущено %d разів"
-
-#, c-format
-#~ msgid "State changed from \"%1$s\" to \"%2$s\""
-#~ msgstr "Стан змінено з «%1$s» на «%2$s»"
-
-#, c-format
-#~ msgid "Stop at Ratio (%s)"
-#~ msgstr "Зупинити за співвідношення (%s)"
-
-#~ msgid "Stopped"
-#~ msgstr "Зупинено"
-
-#, c-format
-#~ msgid "Stopping port forwarding through \"%s\", service \"%s\""
-#~ msgstr "Припинення переадресування портів через «%s», служба «%s»"
-
-#~ msgid "Sunday"
-#~ msgstr "Неділя"
-
-#, c-format
-#~ msgid "The torrent file \"%s\" is already in use by \"%s.\""
-#~ msgstr "Торент файл \"%s\" вже використовується \"%s.\""
-
-#~ msgid "Thursday"
-#~ msgstr "Четвер"
-
-#~ msgid ""
-#~ "To add a backup URL, add it on the line after the primary URL.\n"
-#~ "To add another primary URL, add it after a blank line."
-#~ msgstr ""
-#~ "Резервну адресу додавайте після основної.\n"
-#~ "Щоб додати нову основну адресу, допишіть її після порожнього рядка."
-
-#, c-format
-#~ msgid "Torrent Creator is skipping file \"%s\": %s"
-#~ msgstr "При формуванні торенту пропущено файл «%s»: %s"
-
-#, c-format
-#~ msgid "Tracker gave a warning: \"%s\""
-#~ msgstr "Трекер видав попередження: «%s»"
-
-#, c-format
-#~ msgid "Tracker gave an error: \"%s\""
-#~ msgstr "Трекер повідомив про помилку: «%s»"
-
-#, c-format
-#~ msgid "Tracker had %s%'d seeders and %'d leechers%s %s ago"
-#~ msgstr "На трекері було %s%'d сідерів %'d лічерів %s %s тому"
-
-#, c-format
-#~ msgid "Tracker warning: \"%*.*s\""
-#~ msgstr "Попередження трекера: \"%*.*s\""
-
-#, c-format
-#~ msgid ""
-#~ "Transmission\n"
-#~ "Up: %1$s %2$s\n"
-#~ "Down: %3$s %4$s"
-#~ msgstr ""
-#~ "Transmission\n"
-#~ "Відв: %1$s %2$s\n"
-#~ "Завант: %3$s %4$s"
-
-#, c-format
-#~ msgid "Transmission doesn't know how to use \"%s\""
-#~ msgstr "Проґрамі Transmission невідомо, що робити з «%s»"
-
-#~ msgid "Tuesday"
-#~ msgstr "Вівторок"
-
-#, c-format
-#~ msgid "U_pload (%s):"
-#~ msgstr "Ві_двантаження (%s):"
-
-#, c-format
-#~ msgid "Unable to add torrent file \"%s\"."
-#~ msgstr "Неможливо додати файл торенту \"%s\"."
-
-#, c-format
-#~ msgid "Unable to rename file as \"%s\": %s"
-#~ msgstr "Неможливо перейменувати файл як \"%s\": %s"
-
-#~ msgid "Unrecognized URL"
-#~ msgstr "Невідоме нам посилання"
-
-#, c-format
-#~ msgid "Verifying local data (%.1f%% tested)"
-#~ msgstr "Перевірка локальних даних (%.1f%% перевірено)"
-
-#~ msgid "Verifying torrent"
-#~ msgstr "Перевірка торенту"
-
-#~ msgid "Wednesday"
-#~ msgstr "Середа"
-
-#, c-format
-#~ msgid "_Download (%s):"
-#~ msgstr "З_авантаження (%s):"
-
-#, c-format
-#~ msgid "_Show %'d of:"
-#~ msgstr "Пок_азувати %'d: "
-
-#, c-format
-#~ msgid "_Upload (%s):"
-#~ msgstr "Ві_двантаження (%s):"
-
-#, c-format
-#~ msgid "blocklist skipped invalid address at line %d"
-#~ msgstr "перелік блокування пропущено: некоректна адреса у рядку %d"
-
-#~ msgid "full"
-#~ msgstr "повний"
-
-#, c-format
-#~ msgid "no longer forwarding port %d"
-#~ msgstr "порт %d більше не переадресовується"
-
-#~ msgid "peer"
-#~ msgid_plural "peers"
-#~ msgstr[0] "вузол"
-#~ msgstr[1] "вузли"
-#~ msgstr[2] "вузли"
-#~ msgstr[3] "вузли"
-
-#, c-format
-#~ msgid "size|Down: %1$s, Up: %2$s"
-#~ msgstr "Завант: %1$s, відвант: %2$s"
-
-#~ msgid "sparse"
-#~ msgstr "рідкісний"
-
-#~ msgid "web seed"
-#~ msgid_plural "web seeds"
-#~ msgstr[0] "веб-сид"
-#~ msgstr[1] "веб-сиди"
-#~ msgstr[2] "веб-сиди"
-#~ msgstr[3] "веб-сиди"
+msgstr[0] "день"
+msgstr[1] "дні"
+msgstr[2] "днів"
+msgstr[3] "дня"

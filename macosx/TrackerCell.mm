@@ -18,7 +18,7 @@
 #define PADDING_ABOVE_NAME 1.0
 #define PADDING_BETWEEN_LINES 1.0
 #define PADDING_BETWEEN_LINES_ON_SAME_LINE 4.0
-#define COUNT_WIDTH 40.0
+#define COUNT_WIDTH 60.0
 
 @interface TrackerCell ()
 
@@ -66,7 +66,7 @@ NSMutableSet* fTrackerIconLoading;
             initWithObjectsAndKeys:[NSFont messageFontOfSize:12.0], NSFontAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil];
 
         _fStatusAttributes = [[NSMutableDictionary alloc]
-            initWithObjectsAndKeys:[NSFont messageFontOfSize:9.0], NSFontAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil];
+            initWithObjectsAndKeys:[NSFont messageFontOfSize:9.5], NSFontAttributeName, paragraphStyle, NSParagraphStyleAttributeName, nil];
     }
     return self;
 }
@@ -199,7 +199,7 @@ NSMutableSet* fTrackerIconLoading;
         NSImage* result = [NSImage imageWithSystemSymbolName:@"globe" accessibilityDescription:nil];
         [result lockFocus];
         [NSColor.textColor set];
-        NSRect imageRect = { NSZeroPoint, [result size] };
+        NSRect imageRect = { NSZeroPoint, result.size };
         NSRectFillUsingOperation(imageRect, NSCompositingOperationSourceIn);
         [result unlockFocus];
         return result;
@@ -235,7 +235,7 @@ NSMutableSet* fTrackerIconLoading;
                 {
                     [fTrackerIconCache setObject:icon forKey:baseAddress];
 
-                    [[self controlView] setNeedsDisplay:YES];
+                    [self.controlView setNeedsDisplay:YES];
                 }
                 else
                 {

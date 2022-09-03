@@ -1,11 +1,12 @@
 // This file Copyright © 2009-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
 #pragma once
 
 #include <memory>
+#include <unordered_set>
 
 #include <QString>
 #include <QMap>
@@ -138,7 +139,7 @@ private:
 
     QMap<QString, QTreeWidgetItem*> peers_;
 
-    QIcon const icon_encrypted_ = QIcon(QStringLiteral(":/icons/encrypted.png"));
+    QIcon const icon_encrypted_ = QIcon(QStringLiteral(":/icons/encrypted.svg"));
     QIcon const icon_unencrypted_ = {};
 
     static int prev_tab_index_;

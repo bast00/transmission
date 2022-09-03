@@ -1,5 +1,5 @@
 // This file Copyright (C) 2010-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -11,7 +11,6 @@
 #include "transmission.h"
 #include "crypto-utils.h"
 #include "bitfield.h"
-#include "utils.h" /* tr_free */
 
 #include "gtest/gtest.h"
 
@@ -137,7 +136,7 @@ TEST(Bitfield, setRaw)
 
     // check that the spare bits t the end are zero
     bf = tr_bitfield{ 1 };
-    uint8_t by = std::numeric_limits<uint8_t>::max();
+    uint8_t const by = std::numeric_limits<uint8_t>::max();
     bf.setRaw(&by, 1);
     EXPECT_TRUE(bf.hasAll());
     EXPECT_FALSE(bf.hasNone());
@@ -149,7 +148,7 @@ TEST(Bitfield, setRaw)
 
 TEST(Bitfield, bitfields)
 {
-    unsigned int bitcount = 500;
+    unsigned int const bitcount = 500;
     tr_bitfield field(bitcount);
 
     // test tr_bitfield::set()

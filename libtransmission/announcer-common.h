@@ -1,5 +1,5 @@
 // This file Copyright © 2010-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cstdint> // uint64_t
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -20,7 +21,8 @@
 #include "interned-string.h"
 #include "net.h"
 #include "peer-mgr.h" // tr_pex
-#include "web-utils.h"
+
+struct tr_url_parsed_t;
 
 /***
 ****  SCRAPE
@@ -126,7 +128,7 @@ enum tr_announce_event
     TR_ANNOUNCE_EVENT_STOPPED,
 };
 
-char const* tr_announce_event_get_string(tr_announce_event);
+std::string_view tr_announce_event_get_string(tr_announce_event);
 
 struct tr_announce_request
 {
@@ -237,8 +239,8 @@ void tr_tracker_udp_announce(
 
 void tr_tracker_udp_start_shutdown(tr_session* session);
 
-void tr_announcerParseHttpAnnounceResponse(tr_announce_response& response, std::string_view msg, char const* log_name);
+void tr_announcerParseHttpAnnounceResponse(tr_announce_response& response, std::string_view benc, std::string_view log_name);
 
-void tr_announcerParseHttpScrapeResponse(tr_scrape_response& response, std::string_view msg, char const* log_name);
+void tr_announcerParseHttpScrapeResponse(tr_scrape_response& response, std::string_view benc, std::string_view log_name);
 
 tr_interned_string tr_announcerGetKey(tr_url_parsed_t const& parsed);

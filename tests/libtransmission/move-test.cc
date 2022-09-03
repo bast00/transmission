@@ -1,5 +1,5 @@
 // This file Copyright (C) 2013-2022 Mnemosyne LLC.
-// It may be used under GPLv2 (SPDX: GPL-2.0), GPLv3 (SPDX: GPL-3.0),
+// It may be used under GPLv2 (SPDX: GPL-2.0-only), GPLv3 (SPDX: GPL-3.0-only),
 // or any future license endorsed by Mnemosyne LLC.
 // License text can be found in the licenses/ folder.
 
@@ -16,7 +16,6 @@
 #include "cache.h" // tr_cacheWriteBlock()
 #include "file.h" // tr_sys_path_*()
 #include "tr-strbuf.h"
-#include "utils.h"
 #include "variant.h"
 
 #include "test-fixtures.h"
@@ -61,9 +60,9 @@ TEST_P(IncompleteDirTest, incompleteDir)
     auto path = tr_pathbuf{};
 
     path.assign(incomplete_dir, '/', tr_torrentFile(tor, 0).name, tr_torrent_files::PartialFileSuffix);
-    EXPECT_EQ(path, makeString(tr_torrentFindFile(tor, 0)));
+    EXPECT_EQ(path, tr_torrentFindFile(tor, 0));
     path.assign(incomplete_dir, '/', tr_torrentFile(tor, 1).name);
-    EXPECT_EQ(path, makeString(tr_torrentFindFile(tor, 1)));
+    EXPECT_EQ(path, tr_torrentFindFile(tor, 1));
     EXPECT_EQ(tor->pieceSize(), tr_torrentStat(tor)->leftUntilDone);
 
     // auto constexpr completeness_unset = tr_completeness { -1 };
@@ -74,7 +73,7 @@ TEST_P(IncompleteDirTest, incompleteDir)
     {
         *static_cast<tr_completeness*>(vc) = c;
     };
-    tr_torrentSetCompletenessCallback(tor, zeroes_completeness_func, &completeness);
+    tr_sessionSetCompletenessCallback(session_, zeroes_completeness_func, &completeness);
 
     struct TestIncompleteDirData
     {
@@ -130,7 +129,7 @@ TEST_P(IncompleteDirTest, incompleteDir)
     for (tr_file_index_t i = 0; i < n; ++i)
     {
         auto const expected = tr_pathbuf{ download_dir, '/', tr_torrentFile(tor, i).name };
-        EXPECT_EQ(expected, makeString(tr_torrentFindFile(tor, i)));
+        EXPECT_EQ(expected, tr_torrentFindFile(tor, i));
     }
 
     // cleanup
@@ -156,7 +155,7 @@ using MoveTest = SessionTest;
 
 TEST_F(MoveTest, setLocation)
 {
-    auto const target_dir = tr_pathbuf{ tr_sessionGetConfigDir(session_), "/target"sv };
+    auto const target_dir = tr_pathbuf{ session_->configDir(), "/target"sv };
     tr_sys_dir_create(target_dir.data(), TR_SYS_DIR_CREATE_PARENTS, 0777, nullptr);
 
     // init a torrent.
@@ -184,7 +183,7 @@ TEST_F(MoveTest, setLocation)
     for (tr_file_index_t i = 0; i < n; ++i)
     {
         auto const expected = tr_pathbuf{ target_dir, '/', tr_torrentFile(tor, i).name };
-        EXPECT_EQ(expected, makeString(tr_torrentFindFile(tor, i)));
+        EXPECT_EQ(expected, tr_torrentFindFile(tor, i));
     }
 
     // cleanup
