@@ -5,6 +5,7 @@ Transmission is a fast, easy, and free BitTorrent client. It comes in several fl
   * GTK+ and Qt GUI applications for Linux, BSD, etc.
   * A headless daemon for servers and routers
   * A web UI for remote controlling any of the above
+  * **Exclusive** : No fckin data about how much you download/upload sent to tracker, so boring to keep a ratio positive
 
 Visit https://transmissionbt.com/ for more information.
 
