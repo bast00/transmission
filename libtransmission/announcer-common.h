@@ -79,6 +79,9 @@ struct tr_announce_request
     /* the total size of the torrent minus the number of bytes completed */
     uint64_t leftUntilComplete = 0;
 
+    /*the total size of the torrent */
+    uint64_t totalSize = 0;
+
     /* the tracker's announce URL */
     tr_interned_string announce_url;
 

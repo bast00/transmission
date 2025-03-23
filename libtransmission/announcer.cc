@@ -932,6 +932,7 @@ void on_announce_error(tr_tier* tier, char const* err, tr_announce_event e)
     req.down = tier->byteCounts[TR_ANN_DOWN];
     req.corrupt = tier->byteCounts[TR_ANN_CORRUPT];
     req.leftUntilComplete = tor->has_metainfo() ? tor->total_size() - tor->has_total() : INT64_MAX;
+    req.totalSize = tor->total_size();
     req.event = event;
     req.numwant = event == TR_ANNOUNCE_EVENT_STOPPED ? 0 : Numwant;
     req.key = tor->announce_key();

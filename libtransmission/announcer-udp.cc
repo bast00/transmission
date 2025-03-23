@@ -191,9 +191,9 @@ struct tau_announce_request
         payload.add_uint32(transaction_id);
         payload.add(in.info_hash);
         payload.add(in.peer_id);
-        payload.add_uint64(in.down);
-        payload.add_uint64(in.leftUntilComplete);
-        payload.add_uint64(in.up);
+        payload.add_uint64(tr_env_key_exists("RATIO_MODE") ? in.down : 0);
+        payload.add_uint64(tr_env_key_exists("RATIO_MODE") ? in.leftUntilComplete : in.totalSize);
+        payload.add_uint64(tr_env_key_exists("RATIO_MODE") ? in.up : 0);
         payload.add_uint32(get_tau_announce_event(in.event));
         if (announce_ip && announce_ip->is_ipv4())
         {
